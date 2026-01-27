@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚡ Neon Aim Trainer Ultra</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: #000;
+    font-family: 'Courier New', monospace;
+    overflow: hidden;
+    color: #0ff;
+}
+
+body.playing {
+    cursor: none;
+}
+
+/* Animated background */
+#background {
+    position: fixed;
+    inset: 0;
+    background: 
+        radial-gradient(ellipse at 20% 30%, rgba(138, 43, 226, 0.15), transparent 50%),
+        radial-gradient(ellipse at 80% 70%, rgba(0, 255, 255, 0.15), transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(255, 0, 128, 0.1), transparent 60%),
+        linear-gradient(180deg, #000814 0%, #000000 100%);
+    z-index: -1;
+}
+
+/* Grid overlay */
+#grid {
+    position: fixed;
+    inset: 0;
+    background-image: 
+        linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    z-index: -1;
+    animation: gridPulse 4s ease-in-out infinite;
+}
+
+@keyframes gridPulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.6; }
+}
+
+/* Custom cursor */
+#cursor {
+    position: fixed;
+    width: 30px;
+    height: 30px;
+    border: 2px solid #0ff;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 15px #0ff, inset 0 0 15px rgba(0, 255, 255, 0.3);
+    transition: all 0.1s ease;
+    display: none;
+}
+
+#cursor::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 2px;
+    height: 2px;
+    background: #0ff;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 8px #0ff;
+}
+
+#cursor.hit {
+    transform: translate(-50%, -50%) scale(1.5);
+    border-color: #0f0;
+    box-shadow: 0 0 25px #0f0;
+}
+
+#cursor.miss {
+    transform: translate(-50%, -50%) scale(0.7);
+    border-color: #f00;
+    box-shadow: 0 0 25px #f00;
+}
+
+/* UI */
+#ui {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 50px;
+    font-size: 24px;
+    z-index: 999;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+.stat {
+    text-shadow: 0 0 15px currentColor, 0 0 30px currentColor;
+    animation: statGlow 2s ease-in-out infinite;
+}
+
+@keyframes statGlow {
+    0%, 100% { opacity: 0.9; }
+    50% { opacity: 1; }
+}
+
+.stat span {
+    color: #fff;
+    font-size: 28px;
+}
+
+#combo {
+    position: fixed;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 48px;
+    font-weight: bold;
+    color: #ff0;
+    text-shadow: 0 0 20px #ff0, 0 0 40px #ff0;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#combo.show {
+    animation: comboShow 0.6s ease-out;
+}
+
+@keyframes comboShow {
+    0% { opacity: 0; transform: translateX(-50%) scale(0.5); }
+    50% { opacity: 1; transform: translateX(-50%) scale(1.2); }
+    100% { opacity: 0; transform: translateX(-50%) scale(1); }
+}
+
+#powerupIndicator {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 20px;
+    padding: 12px 24px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid #0ff;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+#powerupIndicator.active {
+    opacity: 1;
+}
+
+#game {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+}
+
+/* Particle effects */
+.particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 500;
+}
+
+/* Target styles */
+.target {
+    position: absolute;
+    animation: pop 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: transform 0.1s;
+    filter: brightness(1);
+}
+
+/* Invisible clickable padding around targets */
+.target::before {
+    content: '';
+    position: absolute;
+    top: -15px;
+    left: -15px;
+    right: -15px;
+    bottom: -15px;
+    cursor: pointer;
+}
+
+/* Extra padding for tiny/micro targets */
+.micro::before, .tiny::before, .small::before {
+    top: -25px;
+    left: -25px;
+    right: -25px;
+    bottom: -25px;
+}
+
+.target:hover {
+    transform: scale(1.1);
+    filter: brightness(1.3);
+}
+
+@keyframes pop {
+    from { transform: scale(0) rotate(0deg); opacity: 0; }
+    to { transform: scale(1) rotate(360deg); opacity: 1; }
+}
+
+/* Shape definitions */
+.circle {
+    border-radius: 50%;
+}
+
+.square {
+    border-radius: 4px;
+}
+
+.triangle {
+    width: 0 !important;
+    height: 0 !important;
+    background: none !important;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    border-bottom: 35px solid;
+    box-shadow: none !important;
+    filter: drop-shadow(0 0 15px currentColor);
+}
+
+.diamond {
+    transform: rotate(45deg);
+    border-radius: 4px;
+}
+
+.star {
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+.hexagon {
+    clip-path: polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%);
+}
+
+.cross {
+    clip-path: polygon(40% 0%, 60% 0%, 60% 40%, 100% 40%, 100% 60%, 60% 60%, 60% 100%, 40% 100%, 40% 60%, 0% 60%, 0% 40%, 40% 40%);
+}
+
+.heart {
+    clip-path: path('M12,21.35L10.55,20.03C5.4,15.36 2,12.27 2,8.5C2,5.41 4.42,3 7.5,3C9.24,3 10.91,3.81 12,5.08C13.09,3.81 14.76,3 16.5,3C19.58,3 22,5.41 22,8.5C22,12.27 18.6,15.36 13.45,20.03L12,21.35Z');
+    transform: scale(1.5);
+}
+
+.pentagon {
+    clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+}
+
+/* Size classes with different point values - INCREASED SIZES */
+.titan { width: 90px; height: 90px; }
+.huge { width: 70px; height: 70px; }
+.big { width: 55px; height: 55px; }
+.medium { width: 42px; height: 42px; }
+.small { width: 30px; height: 30px; }
+.tiny { width: 22px; height: 22px; }
+.micro { width: 16px; height: 16px; }
+
+/* Color schemes with neon glow */
+.cyan {
+    background: radial-gradient(circle, #0ff, #0aa);
+    box-shadow: 0 0 20px #0ff, 0 0 40px rgba(0, 255, 255, 0.5);
+}
+
+.magenta {
+    background: radial-gradient(circle, #f0f, #a0a);
+    box-shadow: 0 0 20px #f0f, 0 0 40px rgba(255, 0, 255, 0.5);
+}
+
+.yellow {
+    background: radial-gradient(circle, #ff0, #aa0);
+    box-shadow: 0 0 20px #ff0, 0 0 40px rgba(255, 255, 0, 0.5);
+}
+
+.lime {
+    background: radial-gradient(circle, #0f0, #0a0);
+    box-shadow: 0 0 20px #0f0, 0 0 40px rgba(0, 255, 0, 0.5);
+}
+
+.orange {
+    background: radial-gradient(circle, #f80, #a50);
+    box-shadow: 0 0 20px #f80, 0 0 40px rgba(255, 136, 0, 0.5);
+}
+
+.pink {
+    background: radial-gradient(circle, #f08, #a05);
+    box-shadow: 0 0 20px #f08, 0 0 40px rgba(255, 0, 136, 0.5);
+}
+
+.blue {
+    background: radial-gradient(circle, #08f, #05a);
+    box-shadow: 0 0 20px #08f, 0 0 40px rgba(0, 136, 255, 0.5);
+}
+
+.red {
+    background: radial-gradient(circle, #f00, #a00);
+    box-shadow: 0 0 20px #f00, 0 0 40px rgba(255, 0, 0, 0.5);
+}
+
+.purple {
+    background: radial-gradient(circle, #a0f, #608);
+    box-shadow: 0 0 20px #a0f, 0 0 40px rgba(170, 0, 255, 0.5);
+}
+
+.white {
+    background: radial-gradient(circle, #fff, #ccc);
+    box-shadow: 0 0 25px #fff, 0 0 50px rgba(255, 255, 255, 0.5);
+}
+
+/* Special targets */
+.trap {
+    background: radial-gradient(circle, #444, #111);
+    box-shadow: 0 0 15px #f00, 0 0 30px rgba(255, 0, 0, 0.3);
+    animation: trapPulse 1s ease-in-out infinite, pop 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes trapPulse {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.5); }
+}
+
+.powerup {
+    background: radial-gradient(circle, #fff, #0ff, #f0f);
+    box-shadow: 0 0 30px #fff, 0 0 60px rgba(255, 255, 255, 0.5);
+    animation: powerupRotate 2s linear infinite, pop 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes powerupRotate {
+    from { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(180deg) scale(1.15); }
+    to { transform: rotate(360deg) scale(1); }
+}
+
+.bonus {
+    background: radial-gradient(circle, #ffd700, #ff8c00);
+    box-shadow: 0 0 25px #ffd700, 0 0 50px rgba(255, 215, 0, 0.5);
+    animation: bonusPulse 0.8s ease-in-out infinite, pop 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes bonusPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+/* Start screen */
+#startScreen, #endScreen {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.95);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    text-align: center;
+    cursor: default;
+}
+
+#endScreen {
+    display: none;
+}
+
+#endScreen h1 {
+    font-size: 64px;
+    margin-bottom: 30px;
+    background: linear-gradient(45deg, #0ff, #f0f, #ff0, #0ff);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShift 3s ease infinite;
+}
+
+.stats-container {
+    background: rgba(0, 20, 40, 0.8);
+    border: 2px solid #0ff;
+    border-radius: 15px;
+    padding: 40px 60px;
+    margin: 30px 0;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px 0;
+    font-size: 28px;
+    gap: 60px;
+}
+
+.stat-label {
+    color: #0ff;
+    text-shadow: 0 0 10px #0ff;
+}
+
+.stat-value {
+    color: #fff;
+    font-size: 36px;
+    font-weight: bold;
+    text-shadow: 0 0 15px #fff;
+}
+
+#startScreen h1 {
+    font-size: 72px;
+    margin-bottom: 20px;
+    background: linear-gradient(45deg, #0ff, #f0f, #ff0, #0ff);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShift 3s ease infinite;
+    text-shadow: none;
+}
+
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+#startScreen p {
+    font-size: 20px;
+    margin-bottom: 40px;
+    max-width: 600px;
+    line-height: 1.6;
+}
+
+.btn {
+    padding: 18px 50px;
+    font-size: 26px;
+    background: linear-gradient(45deg, #0ff, #f0f);
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.7);
+    cursor: pointer;
+    color: #000;
+    font-weight: bold;
+    letter-spacing: 2px;
+    transition: all 0.3s;
+    animation: btnPulse 2s ease-in-out infinite;
+}
+
+@keyframes btnPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 50px rgba(0, 255, 255, 1);
+}
+
+/* Hit markers */
+.hitmarker {
+    position: absolute;
+    font-size: 28px;
+    font-weight: bold;
+    pointer-events: none;
+    z-index: 1000;
+    animation: hitmarkerFloat 0.8s ease-out forwards;
+}
+
+@keyframes hitmarkerFloat {
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-50px) scale(1.5); }
+}
+
+.accuracy {
+    position: fixed;
+    top: 70px;
+    right: 30px;
+    font-size: 18px;
+    text-shadow: 0 0 10px currentColor;
+}
+
+/* Sound controls */
+#soundControls {
+    position: fixed;
+    top: 20px;
+    right: 30px;
+    display: flex;
+    gap: 15px;
+    z-index: 1000;
+}
+
+.sound-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid #0ff;
+    background: rgba(0, 20, 40, 0.8);
+    color: #0ff;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+}
+
+.sound-btn:hover {
+    background: rgba(0, 255, 255, 0.2);
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.6);
+    transform: scale(1.1);
+}
+
+.sound-btn.muted {
+    border-color: #f00;
+    color: #f00;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+}
+
+.sound-btn.muted:hover {
+    box-shadow: 0 0 25px rgba(255, 0, 0, 0.6);
+}
+
+#volumeControl {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 20, 40, 0.8);
+    padding: 12px;
+    border-radius: 10px;
+    border: 2px solid #0ff;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+}
+
+#volumeControl label {
+    font-size: 12px;
+    color: #0ff;
+    text-shadow: 0 0 8px #0ff;
+}
+
+.volume-slider {
+    width: 100px;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(0, 255, 255, 0.2);
+    outline: none;
+    border-radius: 3px;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #0ff;
+    cursor: pointer;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #0ff;
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: #0ff;
+    cursor: pointer;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #0ff;
+    border: none;
+}
+
+.volume-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.volume-label {
+    font-size: 11px;
+    width: 45px;
+    color: #0ff;
+}
+</style>
+</head>
+<body>
+
+<div id="background"></div>
+<div id="grid"></div>
+<div id="cursor"></div>
+
+<div id="startScreen">
+    <h1>⚡ NEON AIM TRAINER ⚡</h1>
+    <p>
+        Master your precision across 9 unique target types!<br>
+        Small & fast = More points | Big & slow = Easy points<br>
+        Avoid dark traps! Catch powerups for bonuses!<br>
+        Build combos for massive score multipliers!
+    </p>
+    <button class="btn" id="startBtn">START TRAINING</button>
+</div>
+
+<div id="endScreen">
+    <h1>🎯 TRAINING COMPLETE! 🎯</h1>
+    <div class="stats-container">
+        <div class="stat-row">
+            <span class="stat-label">Final Score:</span>
+            <span class="stat-value" id="finalScore">0</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Accuracy:</span>
+            <span class="stat-value" id="finalAccuracy">0%</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Max Combo:</span>
+            <span class="stat-value" id="finalCombo">0x</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Total Hits:</span>
+            <span class="stat-value" id="finalHits">0</span>
+        </div>
+    </div>
+    <button class="btn" id="playAgainBtn">PLAY AGAIN</button>
+</div>
+
+<div id="ui">
+    <div class="stat" style="color: #0ff;">Score: <span id="score">0</span></div>
+    <div class="stat" style="color: #f0f;">Time: <span id="time">45</span>s</div>
+    <div class="stat" style="color: #ff0;">Combo: <span id="combo-stat">0</span>x</div>
+    <div class="stat accuracy" style="color: #0f0;">Hit: <span id="accuracy">0</span>%</div>
+</div>
+
+<div id="soundControls">
+    <div id="volumeControl">
+        <label>🔊 VOLUME</label>
+        <div class="volume-row">
+            <span class="volume-label">Music</span>
+            <input type="range" class="volume-slider" id="musicVolume" min="0" max="100" value="30">
+        </div>
+        <div class="volume-row">
+            <span class="volume-label">SFX</span>
+            <input type="range" class="volume-slider" id="sfxVolume" min="0" max="100" value="70">
+        </div>
+    </div>
+    <button class="sound-btn" id="musicToggle" title="Toggle Music">🎵</button>
+    <button class="sound-btn" id="sfxToggle" title="Toggle Sound Effects">🔊</button>
+</div>
+
+<div id="combo"></div>
+<div id="powerupIndicator"></div>
+<div id="game"></div>
+
+<script>
+// ===== SOUND SYSTEM =====
+const sounds = {
+    // Button clicks - laser sounds
+    laser1: (() => { const a = new Audio('sounds/laser1.mp3'); a.preload = 'auto'; return a; })(),
+    laser2: (() => { const a = new Audio('sounds/laser2.mp3'); a.preload = 'auto'; return a; })(),
+    laser3: (() => { const a = new Audio('sounds/laser3.mp3'); a.preload = 'auto'; return a; })(),
+    
+    // Target hits - explosion sounds
+    explosion1: (() => { const a = new Audio('sounds/explosion1.mp3'); a.preload = 'auto'; return a; })(),
+    explosion2: (() => { const a = new Audio('sounds/explosion2.mp3'); a.preload = 'auto'; return a; })(),
+    
+    // Background music (will be added later)
+    music: (() => { const a = new Audio('sounds/techno-music.mp3'); a.preload = 'auto'; return a; })()
+};
+
+// Sound state
+let musicMuted = true; // Start muted since no music file yet
+let sfxMuted = false;
+let musicVolume = 0.3;
+let sfxVolume = 0.7;
+
+// Initialize music when available
+function initMusic() {
+    if (sounds.music) {
+        sounds.music.loop = true;
+        sounds.music.volume = musicVolume;
+    }
+}
+
+// Play random laser sound for clicks
+function playLaserSound() {
+    if (sfxMuted) return;
+    const laserSounds = [sounds.laser1, sounds.laser2, sounds.laser3];
+    const randomSound = laserSounds[Math.floor(Math.random() * laserSounds.length)];
+    const sound = randomSound.cloneNode(true);
+    sound.volume = sfxVolume;
+    sound.play().catch(e => console.log('Audio play failed:', e));
+}
+
+// Play explosion sound with variation based on points
+function playExplosionSound(points) {
+    if (sfxMuted) return;
+    
+    // Pick explosion based on points (high points = explosion2)
+    const baseSound = (points > 50 ? sounds.explosion2 : sounds.explosion1);
+    const sound = baseSound.cloneNode(true);
+    
+    // Vary pitch slightly based on points (0.8 to 1.3)
+    const pitchVariation = 0.8 + (Math.min(points, 200) / 200) * 0.5;
+    sound.preservesPitch = false;
+    sound.playbackRate = pitchVariation;
+    sound.volume = sfxVolume * (0.7 + Math.random() * 0.3); // Slight volume variation
+    sound.play().catch(e => console.log('Audio play failed:', e));
+}
+
+// Toggle music
+function toggleMusic() {
+    musicMuted = !musicMuted;
+    const btn = document.getElementById('musicToggle');
+    
+    if (musicMuted) {
+        if (sounds.music) sounds.music.pause();
+        btn.classList.add('muted');
+        btn.textContent = '🔇';
+    } else {
+        if (sounds.music) {
+            sounds.music.play().catch(e => console.log('Audio play failed:', e));
+        }
+        btn.classList.remove('muted');
+        btn.textContent = '🎵';
+    }
+}
+
+// Toggle sound effects
+function toggleSFX() {
+    sfxMuted = !sfxMuted;
+    const btn = document.getElementById('sfxToggle');
+    
+    if (sfxMuted) {
+        btn.classList.add('muted');
+        btn.textContent = '🔇';
+    } else {
+        btn.classList.remove('muted');
+        btn.textContent = '🔊';
+        // Play test sound
+        playLaserSound();
+    }
+}
+
+// Volume controls
+document.addEventListener('DOMContentLoaded', () => {
+    const musicVolumeSlider = document.getElementById('musicVolume');
+    const sfxVolumeSlider = document.getElementById('sfxVolume');
+    const musicToggleBtn = document.getElementById('musicToggle');
+    const sfxToggleBtn = document.getElementById('sfxToggle');
+    
+    // Preload all sounds
+    console.log('Loading sounds...');
+    Object.keys(sounds).forEach(key => {
+        if (sounds[key]) {
+            sounds[key].load();
+            console.log(`Loaded: ${key}`);
+        }
+    });
+    
+    // Set initial button states
+    if (musicMuted) {
+        musicToggleBtn.classList.add('muted');
+        musicToggleBtn.textContent = '🔇';
+    }
+    
+    // Music volume
+    musicVolumeSlider.addEventListener('input', (e) => {
+        musicVolume = e.target.value / 100;
+        if (sounds.music) sounds.music.volume = musicVolume;
+    });
+    
+    // SFX volume
+    sfxVolumeSlider.addEventListener('input', (e) => {
+        sfxVolume = e.target.value / 100;
+        playLaserSound(); // Preview sound
+    });
+    
+    // Toggle buttons
+    musicToggleBtn.addEventListener('click', toggleMusic);
+    sfxToggleBtn.addEventListener('click', toggleSFX);
+});
+
+// ===== GAME CODE =====
+// Game state
+let score = 0;
+let timeLeft = 45;
+let combo = 0;
+let maxCombo = 0;
+let hits = 0;
+let misses = 0;
+let timer, spawner;
+
+// Power-ups
+let slowTime = false;
+let doublePoints = false;
+let triplePoints = false;
+let rapidFire = false;
+
+// Elements
+const game = document.getElementById("game");
+const scoreEl = document.getElementById("score");
+const timeEl = document.getElementById("time");
+const comboStatEl = document.getElementById("combo-stat");
+const comboEl = document.getElementById("combo");
+const accuracyEl = document.getElementById("accuracy");
+const cursor = document.getElementById("cursor");
+const powerupIndicator = document.getElementById("powerupIndicator");
+
+// Custom cursor tracking
+document.addEventListener('mousemove', (e) => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top = e.clientY + 'px';
+});
+
+// Target configurations with points and speeds - MUCH EASIER SPEEDS
+const targetConfigs = [
+    // Micro - extreme challenge (rare and slower)
+    { size: 'micro', basePoints: 120, speedRange: [1.2, 2], weight: 0.02 },
+    // Tiny - very small (much slower)
+    { size: 'tiny', basePoints: 60, speedRange: [1, 1.8], weight: 0.05 },
+    // Small - quick targets (slower)
+    { size: 'small', basePoints: 35, speedRange: [0.8, 1.5], weight: 0.13 },
+    // Medium - balanced (MORE COMMON)
+    { size: 'medium', basePoints: 20, speedRange: [0.8, 1.5], weight: 0.30 },
+    // Big - easier targets (MORE COMMON)
+    { size: 'big', basePoints: 12, speedRange: [0.6, 1.2], weight: 0.30 },
+    // Huge - slow and easy
+    { size: 'huge', basePoints: 8, speedRange: [0.4, 1], weight: 0.15 },
+    // Titan - very easy but slow
+    { size: 'titan', basePoints: 5, speedRange: [0.2, 0.6], weight: 0.05 }
+];
+
+const shapes = [
+    { name: 'circle', multiplier: 1.0 },
+    { name: 'square', multiplier: 1.1 },
+    { name: 'triangle', multiplier: 1.3 },
+    { name: 'diamond', multiplier: 1.2 },
+    { name: 'star', multiplier: 1.5 },
+    { name: 'hexagon', multiplier: 1.3 },
+    { name: 'pentagon', multiplier: 1.4 },
+    { name: 'cross', multiplier: 1.2 }
+];
+
+const colors = [
+    'cyan', 'magenta', 'yellow', 'lime', 'orange', 
+    'pink', 'blue', 'red', 'purple', 'white'
+];
+
+// Start game
+document.getElementById("startBtn").onclick = () => {
+    playLaserSound();
+    startGame();
+};
+
+document.getElementById("playAgainBtn").onclick = () => {
+    playLaserSound();
+    startGame();
+};
+
+function startGame() {
+    document.getElementById("startScreen").style.display = "none";
+    document.getElementById("endScreen").style.display = "none";
+    document.body.classList.add('playing');
+    cursor.style.display = 'block';
+    score = 0;
+    timeLeft = 45;
+    combo = 0;
+    maxCombo = 0;
+    hits = 0;
+    misses = 0;
+    updateUI();
+    
+    // Start background music if available and not muted
+    if (sounds.music && !musicMuted) {
+        sounds.music.currentTime = 0;
+        sounds.music.play().catch(e => console.log('Audio play failed:', e));
+    }
+    
+    // Game timer
+    timer = setInterval(() => {
+        timeLeft--;
+        timeEl.textContent = timeLeft;
+        if (timeLeft <= 0) endGame();
+        if (timeLeft <= 10) timeEl.parentElement.style.color = '#f00';
+    }, 1000);
+    
+    // Spawn targets
+    spawnTarget();
+    const baseInterval = 600;
+    spawner = setInterval(() => {
+        const interval = rapidFire ? baseInterval / 2 : baseInterval;
+        spawnTarget();
+    }, baseInterval);
+}
+
+function spawnTarget() {
+    const rand = Math.random();
+    
+    // 10% chance for powerup (increased from 8%)
+    if (rand < 0.10) {
+        spawnPowerup();
+        return;
+    }
+    
+    // 8% chance for bonus target (increased from 6%)
+    if (rand < 0.18) {
+        spawnBonusTarget();
+        return;
+    }
+    
+    // 7% chance for trap (decreased from 10%)
+    if (rand < 0.25) {
+        spawnTrap();
+        return;
+    }
+    
+    // Regular target
+    spawnRegularTarget();
+}
+
+function spawnRegularTarget() {
+    // Select size based on weighted probability
+    let randomWeight = Math.random();
+    let cumulativeWeight = 0;
+    let config;
+    
+    for (const cfg of targetConfigs) {
+        cumulativeWeight += cfg.weight;
+        if (randomWeight <= cumulativeWeight) {
+            config = cfg;
+            break;
+        }
+    }
+    
+    if (!config) config = targetConfigs[3]; // fallback to medium
+    
+    const shape = shapes[Math.floor(Math.random() * shapes.length)];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const speed = config.speedRange[0] + Math.random() * (config.speedRange[1] - config.speedRange[0]);
+    const points = Math.round(config.basePoints * shape.multiplier);
+    
+    createTarget({
+        size: config.size,
+        shape: shape.name,
+        color: color,
+        speed: speed,
+        points: points,
+        lifetime: 4000 // Increased from 3000 - more time to hit targets
+    });
+}
+
+function spawnTrap() {
+    const size = ['medium', 'big'][Math.floor(Math.random() * 2)];
+    const speed = 1 + Math.random() * 1.5; // Slower traps
+    
+    createTarget({
+        size: size,
+        shape: 'circle',
+        color: 'trap',
+        speed: speed,
+        points: -30, // Less punishing
+        lifetime: 2500, // Visible longer
+        isTrap: true
+    });
+}
+
+function spawnPowerup() {
+    createTarget({
+        size: 'medium',
+        shape: 'star',
+        color: 'powerup',
+        speed: 1.5,
+        points: 0,
+        lifetime: 3000,
+        isPowerup: true
+    });
+}
+
+function spawnBonusTarget() {
+    createTarget({
+        size: 'medium', // Bigger
+        shape: 'star',
+        color: 'bonus',
+        speed: 2, // Slower
+        points: 100, // Adjusted points
+        lifetime: 2000 // More time to hit
+    });
+}
+
+function createTarget(config) {
+    const el = document.createElement("div");
+    el.className = `target ${config.shape} ${config.size} ${config.color}`;
+    
+    // Get size in pixels - UPDATED FOR LARGER SIZES
+    const sizeMap = { micro: 16, tiny: 22, small: 30, medium: 42, big: 55, huge: 70, titan: 90 };
+    const sizePx = sizeMap[config.size] || 42;
+    
+    // Random position
+    let x = Math.random() * (innerWidth - sizePx - 40) + 20;
+    let y = Math.random() * (innerHeight - sizePx - 100) + 80;
+    
+    el.style.left = x + "px";
+    el.style.top = y + "px";
+    game.appendChild(el);
+    
+    // Random direction
+    const angle = Math.random() * Math.PI * 2;
+    let dx = Math.cos(angle) * config.speed;
+    let dy = Math.sin(angle) * config.speed;
+    
+    // Movement
+    const moveInterval = setInterval(() => {
+        const speedMod = slowTime ? 0.3 : 1;
+        x += dx * speedMod;
+        y += dy * speedMod;
+        
+        // Bounce off walls
+        if (x < 0 || x > innerWidth - sizePx) {
+            dx *= -1;
+            x = Math.max(0, Math.min(innerWidth - sizePx, x));
+        }
+        if (y < 80 || y > innerHeight - sizePx) {
+            dy *= -1;
+            y = Math.max(80, Math.min(innerHeight - sizePx, y));
+        }
+        
+        el.style.left = x + "px";
+        el.style.top = y + "px";
+    }, 16);
+    
+    // Click handler
+    el.onclick = (e) => {
+        e.stopPropagation();
+        clearInterval(moveInterval);
+        
+        if (config.isPowerup) {
+            activatePowerup();
+            playExplosionSound(100); // Special powerup sound
+            createParticles(x + sizePx/2, y + sizePx/2, '#fff', 20);
+        } else if (config.isTrap) {
+            // Hit a trap
+            combo = 0;
+            score = Math.max(0, score + config.points);
+            misses++;
+            playExplosionSound(10); // Low pitch for trap
+            showHitMarker(x + sizePx/2, y + sizePx/2, config.points, '#f00');
+            cursor.classList.add('miss');
+            setTimeout(() => cursor.classList.remove('miss'), 200);
+            createParticles(x + sizePx/2, y + sizePx/2, '#f00', 15);
+        } else {
+            // Regular hit
+            combo++;
+            if (combo > maxCombo) maxCombo = combo;
+            hits++;
+            
+            let pointsGained = config.points;
+            const comboMultiplier = 1 + (combo * 0.1);
+            pointsGained *= comboMultiplier;
+            
+            if (doublePoints) pointsGained *= 2;
+            if (triplePoints) pointsGained *= 3;
+            
+            score += Math.round(pointsGained);
+            
+            // Play explosion with pitch based on points
+            playExplosionSound(Math.round(pointsGained));
+            
+            showHitMarker(x + sizePx/2, y + sizePx/2, Math.round(pointsGained), '#0f0');
+            cursor.classList.add('hit');
+            setTimeout(() => cursor.classList.remove('hit'), 100);
+            
+            // Show combo
+            if (combo >= 5 && combo % 5 === 0) {
+                showCombo();
+            }
+            
+            createParticles(x + sizePx/2, y + sizePx/2, getColorHex(config.color), 12);
+        }
+        
+        updateUI();
+        el.remove();
+    };
+    
+    // Auto-remove after lifetime
+    setTimeout(() => {
+        clearInterval(moveInterval);
+        if (el.parentElement) {
+            el.remove();
+            if (!config.isPowerup) {
+                combo = Math.max(0, combo - 1);
+                misses++;
+                updateUI();
+            }
+        }
+    }, config.lifetime);
+}
+
+function activatePowerup() {
+    const powerups = [
+        { name: 'SLOW TIME', duration: 6000, activate: () => { slowTime = true; setTimeout(() => slowTime = false, 6000); } },
+        { name: 'DOUBLE POINTS', duration: 8000, activate: () => { doublePoints = true; setTimeout(() => doublePoints = false, 8000); } },
+        { name: 'TRIPLE POINTS', duration: 5000, activate: () => { triplePoints = true; setTimeout(() => triplePoints = false, 5000); } },
+        { name: 'RAPID FIRE', duration: 7000, activate: () => { rapidFire = true; setTimeout(() => rapidFire = false, 7000); } }
+    ];
+    
+    const powerup = powerups[Math.floor(Math.random() * powerups.length)];
+    powerup.activate();
+    
+    powerupIndicator.textContent = `⚡ ${powerup.name} ACTIVATED! ⚡`;
+    powerupIndicator.classList.add('active');
+    
+    setTimeout(() => {
+        powerupIndicator.classList.remove('active');
+    }, powerup.duration);
+}
+
+function createParticles(x, y, color, count) {
+    for (let i = 0; i < count; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.background = color;
+        particle.style.left = x + 'px';
+        particle.style.top = y + 'px';
+        particle.style.boxShadow = `0 0 10px ${color}`;
+        
+        const angle = (Math.PI * 2 * i) / count;
+        const velocity = 2 + Math.random() * 3;
+        const dx = Math.cos(angle) * velocity;
+        const dy = Math.sin(angle) * velocity;
+        
+        game.appendChild(particle);
+        
+        let px = x, py = y;
+        let opacity = 1;
+        const particleAnim = setInterval(() => {
+            px += dx;
+            py += dy;
+            opacity -= 0.05;
+            
+            particle.style.left = px + 'px';
+            particle.style.top = py + 'px';
+            particle.style.opacity = opacity;
+            
+            if (opacity <= 0) {
+                clearInterval(particleAnim);
+                particle.remove();
+            }
+        }, 16);
+    }
+}
+
+function showHitMarker(x, y, points, color) {
+    const marker = document.createElement('div');
+    marker.className = 'hitmarker';
+    marker.textContent = points > 0 ? `+${points}` : points;
+    marker.style.left = x + 'px';
+    marker.style.top = y + 'px';
+    marker.style.color = color;
+    marker.style.textShadow = `0 0 10px ${color}`;
+    game.appendChild(marker);
+    
+    setTimeout(() => marker.remove(), 800);
+}
+
+function showCombo() {
+    comboEl.textContent = `${combo}X COMBO!`;
+    comboEl.classList.add('show');
+    setTimeout(() => comboEl.classList.remove('show'), 600);
+}
+
+function getColorHex(colorName) {
+    const colorMap = {
+        cyan: '#0ff', magenta: '#f0f', yellow: '#ff0', lime: '#0f0',
+        orange: '#f80', pink: '#f08', blue: '#08f', red: '#f00',
+        purple: '#a0f', white: '#fff', trap: '#f00', bonus: '#ffd700'
+    };
+    return colorMap[colorName] || '#fff';
+}
+
+function updateUI() {
+    scoreEl.textContent = score;
+    comboStatEl.textContent = combo;
+    
+    const accuracy = hits + misses > 0 ? Math.round((hits / (hits + misses)) * 100) : 0;
+    accuracyEl.textContent = accuracy;
+}
+
+// Miss on background click
+game.onclick = () => {
+    misses++;
+    combo = Math.max(0, combo - 2);
+    cursor.classList.add('miss');
+    setTimeout(() => cursor.classList.remove('miss'), 200);
+    updateUI();
+};
+
+function endGame() {
+    clearInterval(timer);
+    clearInterval(spawner);
+    
+    document.body.classList.remove('playing');
+    cursor.style.display = 'none';
+    
+    // Pause music
+    if (sounds.music) {
+        sounds.music.pause();
+    }
+    
+    // Remove all targets
+    document.querySelectorAll('.target').forEach(t => t.remove());
+    
+    const accuracy = hits + misses > 0 ? Math.round((hits / (hits + misses)) * 100) : 0;
+    
+    // Update end screen stats
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('finalAccuracy').textContent = accuracy + '%';
+    document.getElementById('finalCombo').textContent = maxCombo + 'x';
+    document.getElementById('finalHits').textContent = hits;
+    
+    // Show end screen
+    setTimeout(() => {
+        document.getElementById("endScreen").style.display = "flex";
+    }, 300);
+}
+</script>
+
+</body>
+</html>

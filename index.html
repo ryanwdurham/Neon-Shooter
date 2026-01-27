@@ -7,7 +7,9 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; background: #000; font-family: 'Courier New', monospace; overflow: hidden; color: #0ff; touch-action: none; }
-        body.playing { cursor: none; }
+        
+        /* Only show "no cursor" if not a touch device */
+        body.playing:not(.is-touch) { cursor: none; }
 
         #background { 
             position: fixed; inset: 0; 
@@ -19,7 +21,7 @@
 
         #game-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; }
 
-        /* CURSOR: Circle + Dot (Only during play) */
+        /* CURSOR: Circle + Dot (Hidden on mobile via JS) */
         #custom-cursor {
             width: 32px; height: 32px; border: 2px solid #0ff; border-radius: 50%;
             position: fixed; pointer-events: none; z-index: 9999;
@@ -30,39 +32,43 @@
 
         #ui { position: fixed; top: 15px; left: 0; width: 100%; display: flex; justify-content: space-around; z-index: 100; pointer-events: none; }
         .stat { text-align: center; text-shadow: 0 0 10px currentColor; }
-        .stat span { font-size: 28px; font-weight: bold; color: #fff; display: block;}
+        .stat span { font-size: 24px; font-weight: bold; color: #fff; display: block;}
 
         #controls { position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: flex; gap: 10px; }
         .vol-btn { width: 45px; height: 45px; border-radius: 50%; border: 1px solid #0ff; background: rgba(0,0,0,0.6); color: #0ff; cursor: pointer; font-size: 18px; }
 
-        /* START SCREEN */
+        /* SCREENS */
         .screen { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; text-align: center; padding: 20px; }
         
         h1.neon-title { 
-            font-size: 65px; margin-bottom: 25px;
+            font-size: 60px; margin-bottom: 20px;
             background: linear-gradient(45deg, #0ff, #f0f, #ff0, #0ff);
             background-size: 300% 300%;
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             animation: gradientShift 3s ease infinite;
-            text-transform: uppercase;
-            letter-spacing: 4px;
+            text-transform: uppercase; letter-spacing: 2px;
+            width: 100%;
         }
         @keyframes gradientShift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
 
         .blue-info { 
-            color: #0ff; 
-            max-width: 850px; 
-            line-height: 1.4; 
-            margin-bottom: 30px; 
-            font-weight: bold; 
-            text-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+            color: #0ff; max-width: 850px; line-height: 1.4; margin-bottom: 30px; 
+            font-weight: bold; text-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
             font-size: 24px; 
         }
 
         .btn { padding: 20px 60px; font-size: 28px; background: #0ff; border: none; color: #000; border-radius: 12px; cursor: pointer; font-weight: bold; transition: 0.3s; box-shadow: 0 0 25px #0ff; text-transform: uppercase; }
 
-        .results-box { border: 2px solid #0ff; padding: 35px; border-radius: 15px; background: rgba(0, 20, 40, 0.9); margin: 25px 0; min-width: 350px; }
-        .results-box div { margin: 15px 0; font-size: 26px; color: #fff; text-align: left; }
+        /* === MOBILE FIXES === */
+        @media (max-width: 768px) {
+            h1.neon-title { font-size: 38px; margin-bottom: 15px; }
+            .blue-info { font-size: 18px; margin-bottom: 20px; padding: 0 10px; }
+            .btn { padding: 15px 40px; font-size: 22px; margin-bottom: 40px; } /* Lifted up */
+            .stat span { font-size: 20px; }
+        }
+
+        .results-box { border: 2px solid #0ff; padding: 25px; border-radius: 15px; background: rgba(0, 20, 40, 0.9); margin: 15px 0; min-width: 300px; }
+        .results-box div { margin: 10px 0; font-size: 20px; color: #fff; text-align: left; }
         .results-box span { color: #0ff; float: right; }
     </style>
 </head>
@@ -95,7 +101,7 @@
 </div>
 
 <div id="endScreen" class="screen" style="display:none;">
-    <h1 class="neon-title">🎯 ROUND COMPLETE 🎯</h1>
+    <h1 class="neon-title">🎯 COMPLETE 🎯</h1>
     <div class="results-box">
         <div>Final Score: <span id="resScore">0</span></div>
         <div>Accuracy: <span id="resAcc">0%</span></div>
@@ -111,19 +117,16 @@ const ctx = canvas.getContext('2d');
 const cursor = document.getElementById('custom-cursor');
 let width, height, dpr;
 
-/* === FIXED SOUND SYSTEM (POOLED TO PREVENT CUT-OFFS) === */
-const explosionPaths = [
-    'sounds/explosion1.mp3', 'sounds/explosion2.wav', 
-    'sounds/explosion3.mp3', 'sounds/explosion4.mp3', 'sounds/explosion5.mp3'
-];
+// DETECT TOUCH DEVICE
+const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+if (isTouchDevice) document.body.classList.add('is-touch');
+
+const explosionPaths = ['sounds/explosion1.wav', 'sounds/explosion2.wav', 'sounds/explosion3.wav', 'sounds/explosion4.wav', 'sounds/explosion5.wav'];
 const musicPath = 'sounds/electronic2.mp3';
 
-// Create a pool of audio objects for explosions
 const explosionPool = [];
-const POOL_SIZE = 12; // Allow 12 simultaneous explosions
-for(let i=0; i < POOL_SIZE; i++) {
-    explosionPool.push(new Audio());
-}
+const POOL_SIZE = 12; 
+for(let i=0; i < POOL_SIZE; i++) { explosionPool.push(new Audio()); }
 let currentExplosionIndex = 0;
 
 const musicObj = new Audio(musicPath); musicObj.loop = true;
@@ -141,82 +144,46 @@ function toggleMute(type) {
 
 function playExplosion(pts) {
     if(sfxMuted) return;
-    
-    // Pick sound based on target size/points
-    let src;
-    if (pts >= 100) src = explosionPaths[4];
-    else if (pts >= 60) src = explosionPaths[3];
-    else if (pts >= 40) src = explosionPaths[2];
-    else src = explosionPaths[Math.floor(Math.random() * 2)];
-
-    // Recycle an object from the pool
+    let src = pts >= 100 ? explosionPaths[4] : (pts >= 60 ? explosionPaths[3] : (pts >= 40 ? explosionPaths[2] : explosionPaths[Math.floor(Math.random()*2)]));
     const audio = explosionPool[currentExplosionIndex];
-    audio.src = src;
-    audio.currentTime = 0;
-    audio.volume = 0.6;
+    audio.src = src; audio.currentTime = 0; audio.volume = 0.6;
     audio.play().catch(()=>{});
-
     currentExplosionIndex = (currentExplosionIndex + 1) % POOL_SIZE;
 }
 
-// Game Settings
 let targets = [], markers = [];
 let score = 0, combo = 0, maxCombo = 0, hits = 0, shots = 0, timeLeft = 60;
 let gameActive = false, lastTime = 0, spawnTimer = 0;
 
 const SHAPES = ['circle', 'square', 'triangle', 'star', 'hexagon', 'cross', 'diamond'];
-const COLOR_PALETTE = [
-    { main: '#0ff', dark: '#044' }, { main: '#f0f', dark: '#404' },
-    { main: '#ff0', dark: '#440' }, { main: '#0f0', dark: '#040' },
-    { main: '#f80', dark: '#420' }, { main: '#fff', dark: '#444' }
-];
+const COLOR_PALETTE = [{m:'#0ff', d:'#044'}, {m:'#f0f', d:'#404'}, {m:'#ff0', d:'#440'}, {m:'#0f0', d:'#040'}, {m:'#f80', d:'#420'}, {m:'#fff', d:'#444'}];
 
 class Target {
     constructor(type = 'normal') {
         this.type = type;
         this.shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
         const roll = Math.random();
-        
-        if (roll < 0.05) { this.size = 12; this.pts = 150; this.speed = 4.5; } 
-        else if (roll < 0.15) { this.size = 20; this.pts = 100; this.speed = 3.8; } 
-        else if (roll < 0.35) { this.size = 35; this.pts = 50; this.speed = 2.8; } 
-        else if (roll < 0.70) { this.size = 55; this.pts = 20; this.speed = 1.8; } 
-        else { this.size = 85; this.pts = 10; this.speed = 1.2; }
+        if (roll < 0.1) { this.size = 15; this.pts = 150; this.speed = 4.2; } 
+        else if (roll < 0.4) { this.size = 35; this.pts = 60; this.speed = 2.8; } 
+        else { this.size = 60; this.pts = 20; this.speed = 1.6; }
 
-        const colorPick = COLOR_PALETTE[Math.floor(Math.random() * COLOR_PALETTE.length)];
-        this.mainColor = colorPick.main;
-        this.darkColor = colorPick.dark;
-        
-        if (type === 'trap') {
-            this.mainColor = '#400'; this.darkColor = '#100'; this.pts = -50;
-        }
-
+        const c = COLOR_PALETTE[Math.floor(Math.random() * COLOR_PALETTE.length)];
+        this.mainColor = type === 'trap' ? '#400' : c.m;
+        this.darkColor = type === 'trap' ? '#100' : c.d;
         this.x = Math.random() * (window.innerWidth - 100) + 50;
         this.y = Math.random() * (window.innerHeight - 200) + 100;
-        this.rot = 0;
-        this.rotVel = (Math.random() - 0.5) * 0.15;
-        
+        this.rot = 0; this.rotVel = (Math.random() - 0.5) * 0.15;
         const dir = Math.random() * Math.PI * 2;
-        const diff = 1 + (60 - timeLeft) / 50;
-        this.vx = Math.cos(dir) * this.speed * diff;
-        this.vy = Math.sin(dir) * this.speed * diff;
+        this.vx = Math.cos(dir) * this.speed * (1 + (60 - timeLeft) / 50);
+        this.vy = Math.sin(dir) * this.speed * (1 + (60 - timeLeft) / 50);
         this.life = 1.0;
     }
 
     draw() {
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.rot);
-        ctx.globalAlpha = this.life;
-        
+        ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rot); ctx.globalAlpha = this.life;
         const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size);
-        grad.addColorStop(0, this.mainColor);
-        grad.addColorStop(1, this.darkColor);
-        
-        ctx.fillStyle = grad;
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = this.type === 'trap' ? '#f00' : this.mainColor;
-        
+        grad.addColorStop(0, this.mainColor); grad.addColorStop(1, this.darkColor);
+        ctx.fillStyle = grad; ctx.shadowBlur = 20; ctx.shadowColor = this.type === 'trap' ? '#f00' : this.mainColor;
         ctx.beginPath();
         if(this.shape === 'square') ctx.rect(-this.size/2, -this.size/2, this.size, this.size);
         else if(this.shape === 'star') {
@@ -226,17 +193,10 @@ class Target {
             }
         }
         else if(this.shape === 'cross') {
-            const w = this.size/2.5;
-            ctx.rect(-w/2, -this.size, w, this.size*2);
-            ctx.rect(-this.size, -w/2, this.size*2, w);
-        }
-        else if(this.shape === 'diamond') {
-            ctx.moveTo(0, -this.size); ctx.lineTo(this.size, 0); ctx.lineTo(0, this.size); ctx.lineTo(-this.size, 0);
+            const w = this.size/2.5; ctx.rect(-w/2, -this.size, w, this.size*2); ctx.rect(-this.size, -w/2, this.size*2, w);
         }
         else ctx.arc(0, 0, this.size, 0, Math.PI*2);
-
-        ctx.closePath(); ctx.fill();
-        ctx.restore();
+        ctx.closePath(); ctx.fill(); ctx.restore();
     }
 }
 
@@ -244,7 +204,7 @@ class Marker {
     constructor(x, y, txt) { this.x = x; this.y = y; this.txt = txt; this.alpha = 1; }
     draw() {
         ctx.save(); ctx.globalAlpha = this.alpha; ctx.fillStyle = '#0f0';
-        ctx.font = 'bold 24px Courier New'; ctx.textAlign = 'center';
+        ctx.font = 'bold 22px Courier New'; ctx.textAlign = 'center';
         ctx.shadowBlur = 10; ctx.shadowColor = '#0f0';
         ctx.fillText(this.txt, this.x, this.y); ctx.restore();
         this.y -= 1.5; this.alpha -= 0.02;
@@ -261,8 +221,10 @@ function resize() {
 window.addEventListener('resize', resize); resize();
 
 window.addEventListener('mousemove', e => {
-    cursor.style.left = e.clientX + 'px';
-    cursor.style.top = e.clientY + 'px';
+    if(!isTouchDevice) {
+        cursor.style.left = e.clientX + 'px';
+        cursor.style.top = e.clientY + 'px';
+    }
 });
 
 function startGame() {
@@ -271,16 +233,10 @@ function startGame() {
     document.getElementById('startScreen').style.display = 'none';
     document.getElementById('endScreen').style.display = 'none';
     document.body.classList.add('playing');
-    cursor.style.display = 'flex';
+    if(!isTouchDevice) cursor.style.display = 'flex';
     musicObj.play().catch(()=>{});
     requestAnimationFrame(gameLoop);
-    
-    const timer = setInterval(() => {
-        if (!gameActive) { clearInterval(timer); return; }
-        timeLeft--;
-        document.getElementById('time').textContent = timeLeft;
-        if (timeLeft <= 0) endGame();
-    }, 1000);
+    const timer = setInterval(() => { if (!gameActive) { clearInterval(timer); return; } timeLeft--; document.getElementById('time').textContent = timeLeft; if (timeLeft <= 0) endGame(); }, 1000);
 }
 
 function endGame() {
@@ -297,14 +253,10 @@ function gameLoop(time) {
     if (!gameActive) return;
     const dt = time - lastTime; lastTime = time;
     ctx.clearRect(0, 0, width, height);
-
     spawnTimer += dt;
-    const spawnRate = Math.max(300, 850 - (60 - timeLeft) * 9);
-    if (spawnTimer > spawnRate) {
-        targets.push(new Target(Math.random() < 0.15 ? 'trap' : 'normal'));
-        spawnTimer = 0;
+    if (spawnTimer > Math.max(300, 850 - (60 - timeLeft) * 9)) {
+        targets.push(new Target(Math.random() < 0.15 ? 'trap' : 'normal')); spawnTimer = 0;
     }
-
     targets = targets.filter(t => {
         t.x += t.vx; t.y += t.vy; t.rot += t.rotVel;
         if (t.x < t.size || t.x > width - t.size) t.vx *= -1;
@@ -313,10 +265,8 @@ function gameLoop(time) {
         if (t.life > 0) { t.draw(); return true; }
         if (t.type === 'normal') combo = 0; return false;
     });
-
     markers = markers.filter(m => { m.draw(); return m.alpha > 0; });
-    document.getElementById('score').textContent = score;
-    document.getElementById('combo').textContent = combo;
+    document.getElementById('score').textContent = score; document.getElementById('combo').textContent = combo;
     requestAnimationFrame(gameLoop);
 }
 
@@ -326,27 +276,16 @@ function handleInput(x, y) {
     targets.sort((a,b)=>a.size-b.size).forEach(t => {
         if (hit) return;
         if (Math.hypot(t.x-x, t.y-y) < t.size + 20) {
-            hit = true; t.life = 0; 
-            playExplosion(t.pts);
-            if (t.type === 'trap') { 
-                combo = 0; score = Math.max(0, score - 50); 
-                markers.push(new Marker(x, y, "-50")); 
-            } else { 
-                hits++; combo++; if(combo > maxCombo) maxCombo = combo;
-                const p = Math.round(t.pts * (1 + combo * 0.1));
-                score += p; markers.push(new Marker(x, y, `+${p}`));
-            }
+            hit = true; t.life = 0; playExplosion(t.pts);
+            if (t.type === 'trap') { combo = 0; score = Math.max(0, score - 50); markers.push(new Marker(x, y, "-50")); } 
+            else { hits++; combo++; if(combo > maxCombo) maxCombo = combo; const p = Math.round(t.pts * (1 + combo * 0.1)); score += p; markers.push(new Marker(x, y, `+${p}`)); }
         }
     });
-    if (!hit) { combo = 0; }
+    if (!hit) combo = 0;
 }
 
 canvas.addEventListener('mousedown', e => handleInput(e.clientX, e.clientY));
-canvas.addEventListener('touchstart', e => { 
-    e.preventDefault(); const t = e.touches[0];
-    cursor.style.left = t.clientX + 'px'; cursor.style.top = t.clientY + 'px';
-    handleInput(t.clientX, t.clientY);
-}, {passive:false});
+canvas.addEventListener('touchstart', e => { e.preventDefault(); const t = e.touches[0]; handleInput(t.clientX, t.clientY); }, {passive:false});
 </script>
 </body>
 </html>

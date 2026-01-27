@@ -68,6 +68,58 @@ body.playing {
     margin-bottom: 40px;
   }
 }
+/* === HARD MOBILE SOUND FIX === */
+@media (max-width: 768px) {
+
+  /* UI stats stay at top */
+  #ui {
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    flex-wrap: wrap;
+    justify-content: center;
+    font-size: 14px;
+    gap: 10px;
+    pointer-events: none; /* stats don't block gameplay */
+  }
+
+  #ui .stat {
+    pointer-events: none;
+  }
+
+  /* Sound controls: fixed bottom-right, no animations, no transforms */
+  #soundControls {
+    position: fixed !important;
+    bottom: 12px !important;
+    right: 12px !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
+    animation: none !important;
+    filter: none !important;
+    will-change: auto !important;
+    z-index: 9999;
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    background: none !important;
+    pointer-events: auto;
+  }
+
+  /* Kill the big glowing panel on mobile */
+  #volumeControl {
+    display: none !important;
+  }
+
+  /* Sound buttons only */
+  .sound-btn {
+    width: 42px;
+    height: 42px;
+    font-size: 20px;
+    animation: none !important;
+    transform: none !important;
+  }
+}
 
 
 /* Animated background */
@@ -784,6 +836,17 @@ function initMusic() {
         sounds.music.volume = musicVolume;
     }
 }
+
+// Lock soundControls in place on mobile (prevents GPU drift bug)
+if (window.innerWidth <= 768) {
+  const sc = document.getElementById('soundControls');
+  if (sc) {
+    sc.style.position = 'fixed';
+    sc.style.transform = 'none';
+    sc.style.willChange = 'auto';
+  }
+}
+
 
 // Play random laser sound for clicks
 function playLaserSound() {

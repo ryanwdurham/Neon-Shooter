@@ -19,12 +19,20 @@ body.playing {
     cursor: none;
 }
 
-/* === NUCLEAR MOBILE SOUND BAR FIX === */
+/* === MOBILE PERFORMANCE & HUD LOCK FIX === */
 @media (max-width: 768px) {
 
-  /* Stats stay at top, don't block gameplay */
+  /* Stop browser zoom / scale jitter */
+  html, body {
+    overscroll-behavior: none;
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Lock stats HUD */
   #ui {
-    top: 8px;
+    position: fixed;
+    top: 6px;
     left: 50%;
     transform: translateX(-50%);
     flex-wrap: wrap;
@@ -32,13 +40,27 @@ body.playing {
     font-size: 14px;
     gap: 10px;
     pointer-events: none;
+    animation: none !important;
+    filter: none !important;
   }
 
   #ui .stat {
     pointer-events: none;
+    animation: none !important;
+    transform: none !important;
   }
 
-  /* Completely isolate sound controls from game layers */
+  /* Kill background pulse on mobile */
+  #grid {
+    animation: none !important;
+  }
+
+  #background {
+    animation: none !important;
+    background-attachment: fixed;
+  }
+
+  /* HARD LOCK: Bottom sound bar */
   #soundControls {
     position: fixed !important;
     bottom: 0 !important;
@@ -49,27 +71,28 @@ body.playing {
     transform: none !important;
     animation: none !important;
     filter: none !important;
+    will-change: auto !important;
 
     z-index: 999999 !important;
 
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
-    gap: 14px !important;
+    gap: 12px !important;
 
-    background: rgba(0, 0, 0, 0.6) !important;
+    background: rgba(0, 0, 0, 0.7) !important;
     padding: 8px 0 !important;
-    border-top: 1px solid rgba(0,255,255,0.3) !important;
+    border-top: 1px solid rgba(0,255,255,0.25) !important;
 
     pointer-events: auto !important;
   }
 
-  /* Make volume panel horizontal & compact */
+  /* Compact volume controls into a horizontal bar */
   #volumeControl {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
-    gap: 8px !important;
+    gap: 6px !important;
     background: none !important;
     border: none !important;
     box-shadow: none !important;
@@ -78,12 +101,6 @@ body.playing {
 
   #volumeControl label {
     display: none !important;
-  }
-
-  .volume-row {
-    display: flex !important;
-    align-items: center !important;
-    gap: 6px !important;
   }
 
   .volume-slider {
@@ -98,6 +115,7 @@ body.playing {
     transform: none !important;
   }
 }
+
 
 
 /* Animated background */
@@ -801,6 +819,35 @@ const sounds = {
     music: (() => { const a = new Audio('sounds/electronic2.mp3'); a.preload = 'auto'; return a; })()
 };
 
+// ===== MOBILE STABILITY LOCK =====
+if (window.innerWidth <= 768) {
+  document.documentElement.style.overscrollBehavior = 'none';
+  document.body.style.touchAction = 'manipulation';
+
+  window.addEventListener('load', () => {
+    const sc = document.getElementById('soundControls');
+    const ui = document.getElementById('ui');
+
+    if (sc) {
+      sc.style.position = 'fixed';
+      sc.style.bottom = '0';
+      sc.style.left = '0';
+      sc.style.right = '0';
+      sc.style.top = 'auto';
+      sc.style.transform = 'none';
+      sc.style.animation = 'none';
+      sc.style.willChange = 'auto';
+    }
+
+    if (ui) {
+      ui.style.position = 'fixed';
+      ui.style.transform = 'translateX(-50%)';
+      ui.style.willChange = 'auto';
+    }
+  });
+}
+
+
 // Sound state
 let musicMuted = true; // Start muted since no music file yet
 let sfxMuted = false;
@@ -1142,30 +1189,42 @@ function createTarget(config) {
     let dx = Math.cos(angle) * config.speed;
     let dy = Math.sin(angle) * config.speed;
     
-    // Movement
-    const moveInterval = setInterval(() => {
-        const speedMod = slowTime ? 0.3 : 1;
-        x += dx * speedMod;
-        y += dy * speedMod;
+    // Smooth movement using requestAnimationFrame (mobile-friendly)
+let lastTime = performance.now();
+
+function animateTarget(now) {
+    const delta = (now - lastTime) / 16.666; // normalize to 60fps
+    lastTime = now;
+
+    const speedMod = slowTime ? 0.3 : 1;
+    x += dx * speedMod * delta;
+    y += dy * speedMod * delta;
+
+    // Bounce off walls
+    if (x < 0 || x > innerWidth - sizePx) {
+        dx *= -1;
+        x = Math.max(0, Math.min(innerWidth - sizePx, x));
+    }
+    if (y < 80 || y > innerHeight - sizePx) {
+        dy *= -1;
+        y = Math.max(80, Math.min(innerHeight - sizePx, y));
+    }
+
+    el.style.left = x + "px";
+    el.style.top = y + "px";
+
+    el._raf = requestAnimationFrame(animateTarget);
+}
+
+el._raf = requestAnimationFrame(animateTarget);
+
         
-        // Bounce off walls
-        if (x < 0 || x > innerWidth - sizePx) {
-            dx *= -1;
-            x = Math.max(0, Math.min(innerWidth - sizePx, x));
-        }
-        if (y < 80 || y > innerHeight - sizePx) {
-            dy *= -1;
-            y = Math.max(80, Math.min(innerHeight - sizePx, y));
-        }
-        
-        el.style.left = x + "px";
-        el.style.top = y + "px";
-    }, 16);
     
     // Click handler
     el.onclick = (e) => {
         e.stopPropagation();
-        clearInterval(moveInterval);
+        cancelAnimationFrame(el._raf);
+
         
         if (config.isPowerup) {
             activatePowerup();
@@ -1217,7 +1276,8 @@ function createTarget(config) {
     
     // Auto-remove after lifetime
     setTimeout(() => {
-        clearInterval(moveInterval);
+        cancelAnimationFrame(el._raf);
+
         if (el.parentElement) {
             el.remove();
             if (!config.isPowerup) {

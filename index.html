@@ -588,6 +588,53 @@ body.playing {
     width: 45px;
     color: #0ff;
 }
+/* === MOBILE FIXES === */
+@media (max-width: 768px) {
+  #startScreen h1 {
+    font-size: 40px;
+    line-height: 1.1;
+  }
+
+  #endScreen h1 {
+    font-size: 36px;
+  }
+
+  #ui {
+    font-size: 16px;
+    gap: 20px;
+  }
+
+  .stat span {
+    font-size: 18px;
+  }
+
+  #soundControls {
+    top: 10px;
+    right: 10px;
+    transform: none !important;
+    position: fixed;
+  }
+
+  #volumeControl {
+    padding: 8px;
+  }
+
+  .sound-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+
+  #endScreen {
+    padding: 20px;
+    overflow-y: auto;
+  }
+
+  #playAgainBtn {
+    margin-bottom: 40px;
+  }
+}
+
 </style>
 </head>
 <body>

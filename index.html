@@ -472,6 +472,45 @@
             color: #ffd700;
             text-shadow: 0 0 15px #ffd700;
         }
+        
+        /* Difficulty Selection Buttons */
+        .difficulty-btn {
+            padding: 15px 30px;
+            font-size: clamp(16px, 4vw, 20px);
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #0ff;
+            border-radius: 10px;
+            color: #0ff;
+            cursor: pointer;
+            font-weight: bold;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+        }
+        
+        .difficulty-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.6);
+            background: rgba(0, 255, 255, 0.1);
+        }
+        
+        .difficulty-btn.selected {
+            background: linear-gradient(45deg, #0ff, #f0f);
+            color: #000;
+            border-color: #fff;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.8);
+            transform: scale(1.1);
+        }
+        
+        .difficulty-btn[data-difficulty="easy"].selected {
+            background: linear-gradient(45deg, #0f0, #0ff);
+        }
+        
+        .difficulty-btn[data-difficulty="hard"].selected {
+            background: linear-gradient(45deg, #f00, #f0f);
+        }
     </style>
 </head>
 <body>
@@ -515,13 +554,21 @@
 <div id="startScreen" class="screen">
     <h1 class="neon-title">⚡ NEON SHOOTER ⚡</h1>
     <p class="blue-info">
-        Master your precision across 9 unique target types!<br><br>
-        Small & fast = More points | Big & slow = Easy points<br><br>
-        Build hit streaks for massive multipliers and bonuses!<br><br>
-        Avoid red traps! Catch golden targets for 2x points!<br><br>
-        <strong>Press SPACE to pause during game</strong>
+        Hit targets to score! Small = More points | Big = Easy points<br>
+        Build combos for bonuses • Avoid red traps • 🌟 Golden = 2x points
     </p>
-    <button class="btn" onclick="startGame()">START</button>
+    
+    <div style="font-size: 22px; margin: 30px 0 20px 0; color: #0ff; text-shadow: 0 0 10px #0ff; font-weight: bold;">
+        Choose Your Challenge:
+    </div>
+    
+    <div id="difficultyButtons" style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-bottom: 35px;">
+        <button class="difficulty-btn" data-difficulty="easy" onclick="selectDifficulty('easy')">EASY</button>
+        <button class="difficulty-btn selected" data-difficulty="normal" onclick="selectDifficulty('normal')">NORMAL</button>
+        <button class="difficulty-btn" data-difficulty="hard" onclick="selectDifficulty('hard')">HARD</button>
+    </div>
+    
+    <button class="btn" onclick="startGame()">START GAME</button>
 </div>
 
 <div id="endScreen" class="screen" style="display:none;">
@@ -624,6 +671,45 @@ let score = 0, combo = 0, maxCombo = 0, hits = 0, shots = 0, timeLeft = 60;
 let gameActive = false, gamePaused = false, lastTime = 0, spawnTimer = 0;
 let clockPlaying = false;
 let timerInterval;
+let currentDifficulty = 'normal';
+
+// Difficulty Settings
+const DIFFICULTY_SETTINGS = {
+    easy: {
+        time: 90,
+        sizeMultiplier: 1.2,
+        speedMultiplier: 0.7,
+        trapRate: 0.10,
+        targetLifetime: 0.0028,  // Slower decay = longer lifetime
+        comboBonuses: {10: 500, 20: 1000, 30: 1500}
+    },
+    normal: {
+        time: 60,
+        sizeMultiplier: 1.0,
+        speedMultiplier: 1.0,
+        trapRate: 0.15,
+        targetLifetime: 0.0035,
+        comboBonuses: {10: 500, 15: 800, 20: 1200, 25: 2000}
+    },
+    hard: {
+        time: 45,
+        sizeMultiplier: 0.8,
+        speedMultiplier: 1.4,
+        trapRate: 0.20,
+        targetLifetime: 0.0047,  // Faster decay = shorter lifetime
+        comboBonuses: {15: 500, 25: 1000, 40: 2000, 60: 3500}
+    }
+};
+
+function selectDifficulty(difficulty) {
+    currentDifficulty = difficulty;
+    
+    // Update button states
+    document.querySelectorAll('.difficulty-btn').forEach(btn => {
+        btn.classList.remove('selected');
+    });
+    document.querySelector(`[data-difficulty="${difficulty}"]`).classList.add('selected');
+}
 
 // Enhanced neon color palette with glow
 const SHAPES = ['circle', 'square', 'triangle', 'star', 'hexagon', 'cross', 'diamond', 'heart', 'octagon'];
@@ -731,27 +817,28 @@ class Target {
         this.type = type;
         this.shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
         const roll = Math.random();
+        const settings = DIFFICULTY_SETTINGS[currentDifficulty];
         
         // Golden target - rare, 2x points
         if (type === 'golden') {
-            this.size = 40;
+            this.size = 40 * settings.sizeMultiplier;
             this.pts = 300;
-            this.speed = 2.5;
+            this.speed = 2.5 * settings.speedMultiplier;
             this.mainColor = '#ffd700';
             this.darkColor = '#aa8800';
             this.glowColor = 'rgba(255, 215, 0, 0.9)';
         } else if (roll < 0.1) { 
-            this.size = 15; 
+            this.size = 15 * settings.sizeMultiplier; 
             this.pts = 150; 
-            this.speed = 5.2; 
+            this.speed = 5.2 * settings.speedMultiplier; 
         } else if (roll < 0.4) { 
-            this.size = 32; 
+            this.size = 32 * settings.sizeMultiplier; 
             this.pts = 65; 
-            this.speed = 3.2; 
+            this.speed = 3.2 * settings.speedMultiplier; 
         } else { 
-            this.size = 55; 
+            this.size = 55 * settings.sizeMultiplier; 
             this.pts = 25; 
-            this.speed = 1.9; 
+            this.speed = 1.9 * settings.speedMultiplier; 
         }
         
         if (type !== 'golden') {
@@ -767,11 +854,12 @@ class Target {
         this.rotVel = (Math.random() - 0.5) * 0.18;
         
         const dir = Math.random() * Math.PI * 2;
-        this.vx = Math.cos(dir) * this.speed * (1 + (60 - timeLeft) / 45);
-        this.vy = Math.sin(dir) * this.speed * (1 + (60 - timeLeft) / 45);
+        this.vx = Math.cos(dir) * this.speed * (1 + (settings.time - timeLeft) / 45);
+        this.vy = Math.sin(dir) * this.speed * (1 + (settings.time - timeLeft) / 45);
         this.life = 1.0;
         this.pulse = 0;
         this.wasHit = false;
+        this.decayRate = settings.targetLifetime;
     }
     
     draw() {
@@ -949,12 +1037,14 @@ function updateComboDisplay() {
 }
 
 function startGame() {
+    const settings = DIFFICULTY_SETTINGS[currentDifficulty];
+    
     score = 0; 
     combo = 0; 
     maxCombo = 0;
     hits = 0; 
     shots = 0; 
-    timeLeft = 60; 
+    timeLeft = settings.time; 
     targets = []; 
     markers = []; 
     particles = [];
@@ -969,7 +1059,7 @@ function startGame() {
     if(!isTouchDevice) cursor.style.display = 'flex';
     
     document.getElementById('score').textContent = '0';
-    document.getElementById('time').textContent = '60';
+    document.getElementById('time').textContent = settings.time;
     document.getElementById('combo').textContent = '0';
     
     musicObj.volume = 1; 
@@ -1033,17 +1123,18 @@ function gameLoop(time) {
     if (!gameActive || gamePaused) return; 
     const dt = time - lastTime; 
     lastTime = time; 
+    const settings = DIFFICULTY_SETTINGS[currentDifficulty];
     
     ctx.clearRect(0, 0, width, height);
     
     spawnTimer += dt;
-    const spawnRate = Math.max(240, 715 - (60 - timeLeft) * 10);
+    const spawnRate = Math.max(240, 715 - (settings.time - timeLeft) * 10);
     
     if (spawnTimer > spawnRate) { 
         // 3% chance for golden target
         if (Math.random() < 0.03) {
             targets.push(new Target('golden'));
-        } else if (Math.random() < 0.15) {
+        } else if (Math.random() < settings.trapRate) {
             targets.push(new Target('trap'));
         } else {
             targets.push(new Target('normal'));
@@ -1068,7 +1159,7 @@ function gameLoop(time) {
         t.rot += t.rotVel; 
         if (t.x < t.size || t.x > width - t.size) t.vx *= -1; 
         if (t.y < 80 || t.y > height - 100) t.vy *= -1; 
-        t.life -= 0.0035; 
+        t.life -= t.decayRate; 
         if (t.life > 0) { 
             t.draw(); 
             return true; 
@@ -1095,6 +1186,7 @@ function handleInput(x, y) {
     if (!gameActive || gamePaused) return; 
     shots++; 
     let hit = false;
+    const settings = DIFFICULTY_SETTINGS[currentDifficulty];
     
     targets.sort((a,b)=>a.size-b.size).forEach(t => {
         if (hit) return;
@@ -1126,10 +1218,12 @@ function handleInput(x, y) {
                 
                 let bonus = 0; 
                 let milestoneText = "";
-                if (combo === 10) { bonus = 500; milestoneText = "10 HIT BONUS! +500"; }
-                else if (combo === 15) { bonus = 800; milestoneText = "15 HIT BONUS! +800"; }
-                else if (combo === 20) { bonus = 1200; milestoneText = "20 HIT BONUS! +1200"; }
-                else if (combo === 25) { bonus = 2000; milestoneText = "ULTRA COMBO! +2000"; }
+                
+                // Use difficulty-specific combo bonuses
+                if (settings.comboBonuses[combo]) {
+                    bonus = settings.comboBonuses[combo];
+                    milestoneText = `${combo} HIT BONUS! +${bonus}`;
+                }
                 
                 let basePts = Math.round(t.pts * (1 + combo * 0.12));
                 

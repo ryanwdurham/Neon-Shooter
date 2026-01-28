@@ -7,69 +7,71 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; background: #000; font-family: 'Courier New', monospace; overflow: hidden; color: #0ff; touch-action: none; }
-        
-        /* Only show "no cursor" if not a touch device */
         body.playing:not(.is-touch) { cursor: none; }
 
         #background { 
             position: fixed; inset: 0; 
-            background: radial-gradient(ellipse at 20% 30%, rgba(138, 43, 226, 0.15), transparent 50%), 
-                        radial-gradient(ellipse at 80% 70%, rgba(0, 255, 255, 0.15), transparent 50%), 
+            background: radial-gradient(ellipse at 20% 30%, rgba(138, 43, 226, 0.2), transparent 50%), 
+                        radial-gradient(ellipse at 80% 70%, rgba(0, 255, 255, 0.2), transparent 50%), 
                         linear-gradient(180deg, #000814 0%, #000000 100%); 
             z-index: -1; 
         }
 
         #game-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; }
 
-        /* CURSOR: Circle + Dot (Hidden on mobile via JS) */
         #custom-cursor {
             width: 32px; height: 32px; border: 2px solid #0ff; border-radius: 50%;
             position: fixed; pointer-events: none; z-index: 9999;
             transform: translate(-50%, -50%); display: none; align-items: center; justify-content: center;
-            box-shadow: 0 0 15px #0ff;
+            box-shadow: 0 0 20px #0ff;
         }
         #custom-cursor::after { content: ''; width: 6px; height: 6px; background: #0ff; border-radius: 50%; }
 
         #ui { position: fixed; top: 15px; left: 0; width: 100%; display: flex; justify-content: space-around; z-index: 100; pointer-events: none; }
-        .stat { text-align: center; text-shadow: 0 0 10px currentColor; }
-        .stat span { font-size: 24px; font-weight: bold; color: #fff; display: block;}
+        .stat { text-align: center; text-shadow: 0 0 15px currentColor; }
+        .stat span { font-size: 28px; font-weight: bold; color: #fff; display: block; text-shadow: 0 0 10px #fff;}
 
         #controls { position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: flex; gap: 10px; }
-        .vol-btn { width: 45px; height: 45px; border-radius: 50%; border: 1px solid #0ff; background: rgba(0,0,0,0.6); color: #0ff; cursor: pointer; font-size: 18px; }
+        .vol-btn { width: 50px; height: 50px; border-radius: 50%; border: 2px solid #0ff; background: rgba(0,0,0,0.6); color: #0ff; cursor: pointer; font-size: 20px; box-shadow: 0 0 10px #0ff; }
 
-        /* SCREENS */
         .screen { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; text-align: center; padding: 20px; }
         
         h1.neon-title { 
-            font-size: 60px; margin-bottom: 20px;
+            font-size: 70px; margin-bottom: 20px;
             background: linear-gradient(45deg, #0ff, #f0f, #ff0, #0ff);
             background-size: 300% 300%;
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             animation: gradientShift 3s ease infinite;
-            text-transform: uppercase; letter-spacing: 2px;
-            width: 100%;
+            text-transform: uppercase; letter-spacing: 4px; width: 100%;
+            filter: drop-shadow(0 0 20px rgba(0,255,255,0.5));
         }
         @keyframes gradientShift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
 
         .blue-info { 
             color: #0ff; max-width: 850px; line-height: 1.4; margin-bottom: 30px; 
-            font-weight: bold; text-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
-            font-size: 24px; 
+            font-weight: bold; text-shadow: 0 0 15px rgba(0, 255, 255, 0.5); font-size: 24px; 
         }
 
-        .btn { padding: 20px 60px; font-size: 28px; background: #0ff; border: none; color: #000; border-radius: 12px; cursor: pointer; font-weight: bold; transition: 0.3s; box-shadow: 0 0 25px #0ff; text-transform: uppercase; }
+        .btn { 
+            padding: 20px 60px; font-size: 28px; 
+            background: linear-gradient(45deg, #0ff, #f0f, #ff0, #0ff);
+            background-size: 300% 300%;
+            border: none; color: #000; border-radius: 12px; cursor: pointer; 
+            font-weight: bold; transition: 0.3s; box-shadow: 0 0 30px #0ff; 
+            text-transform: uppercase; animation: gradientShift 3s ease infinite, btnPulse 2s ease-in-out infinite;
+        }
+        .btn:hover { transform: scale(1.1); box-shadow: 0 0 50px #0ff; }
+        @keyframes btnPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
 
-        /* === MOBILE FIXES === */
         @media (max-width: 768px) {
-            h1.neon-title { font-size: 38px; margin-bottom: 15px; }
-            .blue-info { font-size: 18px; margin-bottom: 20px; padding: 0 10px; }
-            .btn { padding: 15px 40px; font-size: 22px; margin-bottom: 40px; } /* Lifted up */
-            .stat span { font-size: 20px; }
+            h1.neon-title { font-size: 42px; }
+            .blue-info { font-size: 18px; }
+            .btn { padding: 15px 40px; font-size: 22px; }
         }
 
-        .results-box { border: 2px solid #0ff; padding: 25px; border-radius: 15px; background: rgba(0, 20, 40, 0.9); margin: 15px 0; min-width: 300px; }
-        .results-box div { margin: 10px 0; font-size: 20px; color: #fff; text-align: left; }
-        .results-box span { color: #0ff; float: right; }
+        .results-box { border: 3px solid #0ff; padding: 30px; border-radius: 20px; background: rgba(0, 20, 40, 0.9); margin: 20px 0; min-width: 350px; box-shadow: 0 0 30px rgba(0,255,255,0.3); }
+        .results-box div { margin: 15px 0; font-size: 24px; color: #fff; text-align: left; }
+        .results-box span { color: #0ff; float: right; font-weight: bold; text-shadow: 0 0 10px #0ff; }
     </style>
 </head>
 <body>
@@ -79,9 +81,9 @@
 <canvas id="game-canvas"></canvas>
 
 <div id="ui">
-    <div class="stat" style="color: #0ff;"><label>Score</label><span id="score">0</span></div>
-    <div class="stat" style="color: #f0f;"><label>Time</label><span id="time">60</span></div>
-    <div class="stat" style="color: #ff0;"><label>Combo</label><span id="combo">0</span></div>
+    <div class="stat" style="color: #0ff;"><label>SCORE</label><span id="score">0</span></div>
+    <div class="stat" style="color: #f0f;"><label>TIME</label><span id="time">60</span></div>
+    <div class="stat" style="color: #ff0;"><label>COMBO</label><span id="combo">0</span></div>
 </div>
 
 <div id="controls">
@@ -92,23 +94,22 @@
 <div id="startScreen" class="screen">
     <h1 class="neon-title">⚡ NEON SHOOTER ⚡</h1>
     <p class="blue-info">
-        Master your precision across 9 unique target types!<br>
-        Small & fast = More points | Big & slow = Easy points<br><br>
-        Avoid dark traps! Catch powerups for bonuses!<br>
-        Build combos for massive score multipliers!
+        MASTER YOUR PRECISION<br>
+        SPEED & COMBO ARE KEY<br><br>
+        AVOID RED TRAPS!
     </p>
-    <button class="btn" onclick="startGame()">START</button>
+    <button class="btn" onclick="startGame()">START MISSION</button>
 </div>
 
 <div id="endScreen" class="screen" style="display:none;">
-    <h1 class="neon-title">🎯 COMPLETE 🎯</h1>
+    <h1 class="neon-title">🎯 MISSION OVER 🎯</h1>
     <div class="results-box">
-        <div>Final Score: <span id="resScore">0</span></div>
-        <div>Accuracy: <span id="resAcc">0%</span></div>
-        <div>Max Combo: <span id="resCombo">0</span></div>
-        <div>Total Hits: <span id="resHits">0</span></div>
+        <div>FINAL SCORE: <span id="resScore">0</span></div>
+        <div>ACCURACY: <span id="resAcc">0%</span></div>
+        <div>MAX COMBO: <span id="resCombo">0</span>X</div>
+        <div>TOTAL HITS: <span id="resHits">0</span></div>
     </div>
-    <button class="btn" onclick="startGame()">PLAY AGAIN</button>
+    <button class="btn" onclick="startGame()">RETRY</button>
 </div>
 
 <script>
@@ -117,19 +118,23 @@ const ctx = canvas.getContext('2d');
 const cursor = document.getElementById('custom-cursor');
 let width, height, dpr;
 
-// DETECT TOUCH DEVICE
 const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 if (isTouchDevice) document.body.classList.add('is-touch');
 
-const explosionPaths = ['sounds/explosion1.mp3', 'sounds/explosion2.wav', 'sounds/explosion3.mp3', 'sounds/explosion4.mp3', 'sounds/explosion5.mp3'];
-const musicPath = 'sounds/electronic2.mp3';
+// SOUND ASSETS
+const EXPLOSION_SOUND = 'sounds/explosion1.mp3';
+const MUSIC_SOUND = 'sounds/electronic2.mp3';
 
-const explosionPool = [];
-const POOL_SIZE = 12; 
-for(let i=0; i < POOL_SIZE; i++) { explosionPool.push(new Audio()); }
-let currentExplosionIndex = 0;
+const explosionChannels = [];
+for (let i = 0; i < 15; i++) {
+    const audio = new Audio(EXPLOSION_SOUND);
+    audio.preload = 'auto';
+    explosionChannels.push(audio);
+}
+let currentChannel = 0;
 
-const musicObj = new Audio(musicPath); musicObj.loop = true;
+const musicObj = new Audio(MUSIC_SOUND); 
+musicObj.loop = true;
 let sfxMuted = false;
 
 function toggleMute(type) {
@@ -142,48 +147,80 @@ function toggleMute(type) {
     }
 }
 
-function playExplosion(pts) {
+function playExplosion() {
     if(sfxMuted) return;
-    let src = pts >= 100 ? explosionPaths[4] : (pts >= 60 ? explosionPaths[3] : (pts >= 40 ? explosionPaths[2] : explosionPaths[Math.floor(Math.random()*2)]));
-    const audio = explosionPool[currentExplosionIndex];
-    audio.src = src; audio.currentTime = 0; audio.volume = 0.6;
+    const audio = explosionChannels[currentChannel];
+    audio.currentTime = 0;
+    audio.volume = 0.7;
     audio.play().catch(()=>{});
-    currentExplosionIndex = (currentExplosionIndex + 1) % POOL_SIZE;
+    currentChannel = (currentChannel + 1) % explosionChannels.length;
+}
+
+function fadeOutMusic() {
+    const fadeInterval = setInterval(() => {
+        if (musicObj.volume > 0.05) {
+            musicObj.volume -= 0.05;
+        } else {
+            musicObj.pause();
+            musicObj.volume = 1;
+            clearInterval(fadeInterval);
+        }
+    }, 100);
 }
 
 let targets = [], markers = [];
 let score = 0, combo = 0, maxCombo = 0, hits = 0, shots = 0, timeLeft = 60;
 let gameActive = false, lastTime = 0, spawnTimer = 0;
 
-const SHAPES = ['circle', 'square', 'triangle', 'star', 'hexagon', 'cross', 'diamond'];
-const COLOR_PALETTE = [{m:'#0ff', d:'#044'}, {m:'#f0f', d:'#404'}, {m:'#ff0', d:'#440'}, {m:'#0f0', d:'#040'}, {m:'#f80', d:'#420'}, {m:'#fff', d:'#444'}];
+// ENHANCED NEON ASSETS
+const SHAPES = ['circle', 'square', 'triangle', 'star', 'hexagon', 'cross', 'diamond', 'octagon', 'heart'];
+const NEON_PALETTE = [
+    {m:'#00ffff', d:'#004444'}, // Electric Cyan
+    {m:'#ff00ff', d:'#440044'}, // Plasma Purple
+    {m:'#ffff00', d:'#444400'}, // Laser Yellow
+    {m:'#00ff00', d:'#004400'}, // Toxic Green
+    {m:'#ff8800', d:'#442200'}, // Atomic Orange
+    {m:'#ffffff', d:'#444444'}, // Stark White
+    {m:'#ff0088', d:'#440022'}  // Hot Pink
+];
 
 class Target {
     constructor(type = 'normal') {
         this.type = type;
         this.shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
         const roll = Math.random();
-        if (roll < 0.1) { this.size = 15; this.pts = 150; this.speed = 4.2; } 
-        else if (roll < 0.4) { this.size = 35; this.pts = 60; this.speed = 2.8; } 
-        else { this.size = 60; this.pts = 20; this.speed = 1.6; }
+        if (roll < 0.1) { this.size = 15; this.pts = 150; this.speed = 4.5; } 
+        else if (roll < 0.4) { this.size = 32; this.pts = 65; this.speed = 3.0; } 
+        else { this.size = 55; this.pts = 25; this.speed = 1.8; }
 
-        const c = COLOR_PALETTE[Math.floor(Math.random() * COLOR_PALETTE.length)];
-        this.mainColor = type === 'trap' ? '#400' : c.m;
-        this.darkColor = type === 'trap' ? '#100' : c.d;
+        const c = NEON_PALETTE[Math.floor(Math.random() * NEON_PALETTE.length)];
+        this.mainColor = type === 'trap' ? '#ff0000' : c.m;
+        this.darkColor = type === 'trap' ? '#440000' : c.d;
         this.x = Math.random() * (window.innerWidth - 100) + 50;
         this.y = Math.random() * (window.innerHeight - 200) + 100;
-        this.rot = 0; this.rotVel = (Math.random() - 0.5) * 0.15;
+        this.rot = 0; this.rotVel = (Math.random() - 0.5) * 0.18;
         const dir = Math.random() * Math.PI * 2;
-        this.vx = Math.cos(dir) * this.speed * (1 + (60 - timeLeft) / 50);
-        this.vy = Math.sin(dir) * this.speed * (1 + (60 - timeLeft) / 50);
+        this.vx = Math.cos(dir) * this.speed * (1 + (60 - timeLeft) / 55);
+        this.vy = Math.sin(dir) * this.speed * (1 + (60 - timeLeft) / 55);
         this.life = 1.0;
+        this.pulse = 0;
     }
 
     draw() {
+        this.pulse += 0.1;
+        const pulseAmt = Math.sin(this.pulse) * 5;
         ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rot); ctx.globalAlpha = this.life;
+        
+        // NEON GLOW
+        ctx.shadowBlur = 15 + pulseAmt; 
+        ctx.shadowColor = this.mainColor;
+        
         const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size);
         grad.addColorStop(0, this.mainColor); grad.addColorStop(1, this.darkColor);
-        ctx.fillStyle = grad; ctx.shadowBlur = 20; ctx.shadowColor = this.type === 'trap' ? '#f00' : this.mainColor;
+        ctx.fillStyle = grad;
+        ctx.strokeStyle = this.mainColor;
+        ctx.lineWidth = 3;
+
         ctx.beginPath();
         if(this.shape === 'square') ctx.rect(-this.size/2, -this.size/2, this.size, this.size);
         else if(this.shape === 'star') {
@@ -192,22 +229,41 @@ class Target {
                 ctx.lineTo(Math.cos(i*Math.PI/5 - Math.PI/2) * r, Math.sin(i*Math.PI/5 - Math.PI/2) * r);
             }
         }
+        else if(this.shape === 'triangle') {
+            ctx.moveTo(0, -this.size); ctx.lineTo(this.size, this.size); ctx.lineTo(-this.size, this.size);
+        }
+        else if(this.shape === 'diamond') {
+            ctx.moveTo(0, -this.size); ctx.lineTo(this.size, 0); ctx.lineTo(0, this.size); ctx.lineTo(-this.size, 0);
+        }
+        else if(this.shape === 'heart') {
+            ctx.moveTo(0, this.size/2); ctx.bezierCurveTo(-this.size, -this.size/2, -this.size/2, -this.size, 0, -this.size/4); ctx.bezierCurveTo(this.size/2, -this.size, this.size, -this.size/2, 0, this.size/2);
+        }
+        else if(this.shape === 'octagon') {
+            for(let i=0; i<8; i++) ctx.lineTo(Math.cos(i*Math.PI/4) * this.size, Math.sin(i*Math.PI/4) * this.size);
+        }
         else if(this.shape === 'cross') {
             const w = this.size/2.5; ctx.rect(-w/2, -this.size, w, this.size*2); ctx.rect(-this.size, -w/2, this.size*2, w);
         }
         else ctx.arc(0, 0, this.size, 0, Math.PI*2);
-        ctx.closePath(); ctx.fill(); ctx.restore();
+        
+        ctx.closePath(); 
+        ctx.fill();
+        ctx.stroke(); // Inner stroke for neon definition
+        ctx.restore();
     }
 }
 
 class Marker {
-    constructor(x, y, txt) { this.x = x; this.y = y; this.txt = txt; this.alpha = 1; }
+    constructor(x, y, txt, color) { 
+        this.x = x; this.y = y; this.txt = txt; this.alpha = 1; this.scale = 1.5; this.color = color;
+    }
     draw() {
-        ctx.save(); ctx.globalAlpha = this.alpha; ctx.fillStyle = '#0f0';
-        ctx.font = 'bold 22px Courier New'; ctx.textAlign = 'center';
-        ctx.shadowBlur = 10; ctx.shadowColor = '#0f0';
+        ctx.save(); ctx.globalAlpha = this.alpha; ctx.fillStyle = this.color;
+        // COOLER ANIMATION: Pops up then fades
+        ctx.font = `bold ${Math.floor(28 * this.scale)}px Courier New`; ctx.textAlign = 'center';
+        ctx.shadowBlur = 20; ctx.shadowColor = this.color;
         ctx.fillText(this.txt, this.x, this.y); ctx.restore();
-        this.y -= 1.5; this.alpha -= 0.02;
+        this.y -= 2.2; this.alpha -= 0.015; this.scale *= 0.985;
     }
 }
 
@@ -234,14 +290,24 @@ function startGame() {
     document.getElementById('endScreen').style.display = 'none';
     document.body.classList.add('playing');
     if(!isTouchDevice) cursor.style.display = 'flex';
+    musicObj.volume = 1;
     musicObj.play().catch(()=>{});
     requestAnimationFrame(gameLoop);
-    const timer = setInterval(() => { if (!gameActive) { clearInterval(timer); return; } timeLeft--; document.getElementById('time').textContent = timeLeft; if (timeLeft <= 0) endGame(); }, 1000);
+    const timer = setInterval(() => { 
+        if (!gameActive) { clearInterval(timer); return; } 
+        timeLeft--; 
+        document.getElementById('time').textContent = timeLeft; 
+        if (timeLeft <= 0) {
+            fadeOutMusic();
+            setTimeout(endGame, 1000); 
+        } 
+    }, 1000);
 }
 
 function endGame() {
-    gameActive = false; document.body.classList.remove('playing');
-    cursor.style.display = 'none'; musicObj.pause();
+    gameActive = false; 
+    document.body.classList.remove('playing');
+    cursor.style.display = 'none';
     document.getElementById('endScreen').style.display = 'flex';
     document.getElementById('resScore').textContent = score;
     document.getElementById('resAcc').textContent = Math.round((hits/Math.max(1, shots))*100) + '%';
@@ -254,19 +320,21 @@ function gameLoop(time) {
     const dt = time - lastTime; lastTime = time;
     ctx.clearRect(0, 0, width, height);
     spawnTimer += dt;
-    if (spawnTimer > Math.max(300, 850 - (60 - timeLeft) * 9)) {
-        targets.push(new Target(Math.random() < 0.15 ? 'trap' : 'normal')); spawnTimer = 0;
+    if (spawnTimer > Math.max(250, 800 - (60 - timeLeft) * 10)) {
+        targets.push(new Target(Math.random() < 0.18 ? 'trap' : 'normal')); spawnTimer = 0;
     }
     targets = targets.filter(t => {
         t.x += t.vx; t.y += t.vy; t.rot += t.rotVel;
         if (t.x < t.size || t.x > width - t.size) t.vx *= -1;
-        if (t.y < 80 || t.y > height - 100) t.vy *= -1;
-        t.life -= 0.003;
+        if (t.y < 90 || t.y > height - 100) t.vy *= -1;
+        t.life -= 0.0035;
         if (t.life > 0) { t.draw(); return true; }
-        if (t.type === 'normal') combo = 0; return false;
+        if (t.type === 'normal') combo = 0; 
+        return false;
     });
     markers = markers.filter(m => { m.draw(); return m.alpha > 0; });
-    document.getElementById('score').textContent = score; document.getElementById('combo').textContent = combo;
+    document.getElementById('score').textContent = score; 
+    document.getElementById('combo').textContent = combo;
     requestAnimationFrame(gameLoop);
 }
 
@@ -275,17 +343,32 @@ function handleInput(x, y) {
     shots++; let hit = false;
     targets.sort((a,b)=>a.size-b.size).forEach(t => {
         if (hit) return;
-        if (Math.hypot(t.x-x, t.y-y) < t.size + 20) {
-            hit = true; t.life = 0; playExplosion(t.pts);
-            if (t.type === 'trap') { combo = 0; score = Math.max(0, score - 50); markers.push(new Marker(x, y, "-50")); } 
-            else { hits++; combo++; if(combo > maxCombo) maxCombo = combo; const p = Math.round(t.pts * (1 + combo * 0.1)); score += p; markers.push(new Marker(x, y, `+${p}`)); }
+        if (Math.hypot(t.x-x, t.y-y) < t.size + 25) {
+            hit = true; t.life = 0; 
+            playExplosion();
+            if (t.type === 'trap') { 
+                combo = 0; score = Math.max(0, score - 75); markers.push(new Marker(x, y, "-75", "#ff0000")); 
+            } else { 
+                hits++; 
+                combo++; 
+                // MAX COMBO TRACKING
+                if(combo > maxCombo) maxCombo = combo; 
+                
+                const p = Math.round(t.pts * (1 + combo * 0.15)); 
+                score += p; 
+                markers.push(new Marker(x, y, `+${p}`, t.mainColor)); 
+            }
         }
     });
     if (!hit) combo = 0;
 }
 
 canvas.addEventListener('mousedown', e => handleInput(e.clientX, e.clientY));
-canvas.addEventListener('touchstart', e => { e.preventDefault(); const t = e.touches[0]; handleInput(t.clientX, t.clientY); }, {passive:false});
+canvas.addEventListener('touchstart', e => { 
+    e.preventDefault(); 
+    const t = e.touches[0]; 
+    handleInput(t.clientX, t.clientY); 
+}, {passive:false});
 </script>
 </body>
 </html>

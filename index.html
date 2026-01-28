@@ -2,89 +2,334 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>⚡ NEON SHOOTER ⚡</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { margin: 0; background: #000; font-family: 'Courier New', monospace; overflow: hidden; color: #0ff; touch-action: none; }
+        html, body { position: fixed; width: 100%; height: 100%; overflow: hidden; background: #000; touch-action: none; }
+        body { font-family: 'Courier New', monospace; color: #0ff; }
         body.playing:not(.is-touch) { cursor: none; }
-
+        
+        /* Animated Neon Background */
         #background { 
-            position: fixed; inset: 0; 
-            background: radial-gradient(ellipse at 20% 30%, rgba(138, 43, 226, 0.2), transparent 50%), 
-                        radial-gradient(ellipse at 80% 70%, rgba(0, 255, 255, 0.2), transparent 50%), 
-                        linear-gradient(180deg, #000814 0%, #000000 100%); 
-            z-index: -1; 
+            position: fixed; 
+            inset: 0; 
+            background: 
+                radial-gradient(ellipse at 20% 30%, rgba(138, 43, 226, 0.3), transparent 50%), 
+                radial-gradient(ellipse at 80% 70%, rgba(0, 255, 255, 0.3), transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(255, 0, 128, 0.2), transparent 60%),
+                linear-gradient(180deg, #000814 0%, #000000 100%); 
+            z-index: -2;
+            animation: bgPulse 8s ease-in-out infinite;
         }
-
-        #game-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; }
-
-        #custom-cursor {
-            width: 32px; height: 32px; border: 2px solid #0ff; border-radius: 50%;
-            position: fixed; pointer-events: none; z-index: 9999;
-            transform: translate(-50%, -50%); display: none; align-items: center; justify-content: center;
-            box-shadow: 0 0 20px #0ff;
+        
+        @keyframes bgPulse {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
         }
-        #custom-cursor::after { content: ''; width: 6px; height: 6px; background: #0ff; border-radius: 50%; }
-
-        #ui { position: fixed; top: 15px; left: 0; width: 100%; display: flex; justify-content: space-around; z-index: 100; pointer-events: none; }
-        .stat { text-align: center; text-shadow: 0 0 15px currentColor; }
-        .stat span { font-size: 28px; font-weight: bold; color: #fff; display: block; text-shadow: 0 0 10px #fff;}
-
-        #controls { position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: flex; gap: 10px; }
-        .vol-btn { width: 50px; height: 50px; border-radius: 50%; border: 2px solid #0ff; background: rgba(0,0,0,0.6); color: #0ff; cursor: pointer; font-size: 20px; box-shadow: 0 0 10px #0ff; }
-
-        .screen { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; text-align: center; padding: 20px; }
+        
+        /* Animated Grid Overlay */
+        #grid-overlay {
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 60px 60px;
+            z-index: -1;
+            animation: gridFloat 20s linear infinite;
+        }
+        
+        @keyframes gridFloat {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(60px, 60px); }
+        }
+        
+        /* Floating Particles */
+        #particles-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        .bg-particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #0ff;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #0ff;
+            opacity: 0.4;
+            animation: floatParticle 20s linear infinite;
+        }
+        
+        @keyframes floatParticle {
+            0% { transform: translateY(0) translateX(0); opacity: 0; }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
+            100% { transform: translateY(-100vh) translateX(50px); opacity: 0; }
+        }
+        
+        #game-canvas { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            z-index: 5; 
+            touch-action: none;
+            filter: drop-shadow(0 0 2px rgba(0, 255, 255, 0.3));
+        }
+        
+        #custom-cursor { 
+            width: 32px; 
+            height: 32px; 
+            border: 2px solid #0ff; 
+            border-radius: 50%; 
+            position: fixed; 
+            pointer-events: none; 
+            z-index: 9999; 
+            transform: translate(-50%, -50%); 
+            display: none; 
+            align-items: center; 
+            justify-content: center; 
+            box-shadow: 0 0 20px #0ff, 0 0 40px rgba(0, 255, 255, 0.5);
+            transition: all 0.1s ease;
+        }
+        
+        #custom-cursor::after { 
+            content: ''; 
+            width: 6px; 
+            height: 6px; 
+            background: #0ff; 
+            border-radius: 50%; 
+            box-shadow: 0 0 10px #0ff;
+        }
+        
+        #custom-cursor.hit {
+            transform: translate(-50%, -50%) scale(1.4);
+            border-color: #0f0;
+            box-shadow: 0 0 30px #0f0;
+        }
+        
+        #ui { 
+            position: fixed; 
+            top: env(safe-area-inset-top, 20px); 
+            left: 0; 
+            width: 100%; 
+            display: flex; 
+            justify-content: space-around; 
+            z-index: 100; 
+            pointer-events: none;
+            padding: 0 20px;
+        }
+        
+        .stat { 
+            text-align: center; 
+            text-shadow: 0 0 15px currentColor, 0 0 30px currentColor;
+            animation: statPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes statPulse {
+            0%, 100% { opacity: 0.95; }
+            50% { opacity: 1; }
+        }
+        
+        .stat label {
+            font-size: 14px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .stat span { 
+            font-size: 28px; 
+            font-weight: bold; 
+            color: #fff; 
+            display: block; 
+            text-shadow: 0 0 15px #fff, 0 0 30px currentColor;
+        }
+        
+        /* Combo Display Enhancement */
+        #combo-display {
+            position: fixed;
+            top: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 150;
+            font-size: 48px;
+            font-weight: bold;
+            color: #ff0;
+            text-shadow: 0 0 20px #ff0, 0 0 40px #ff0, 0 0 60px #ff0;
+            opacity: 0;
+            pointer-events: none;
+            animation: comboFlash 0.5s ease-out;
+        }
+        
+        @keyframes comboFlash {
+            0% { opacity: 0; transform: translateX(-50%) scale(0.5); }
+            50% { opacity: 1; transform: translateX(-50%) scale(1.3); }
+            100% { opacity: 0; transform: translateX(-50%) scale(1); }
+        }
+        
+        #controls { 
+            position: fixed; 
+            bottom: env(safe-area-inset-bottom, 20px); 
+            right: 20px; 
+            z-index: 1000; 
+            display: flex; 
+            gap: 10px; 
+        }
+        
+        .vol-btn { 
+            width: 50px; 
+            height: 50px; 
+            border-radius: 50%; 
+            border: 2px solid #0ff; 
+            background: rgba(0,0,0,0.7); 
+            color: #0ff; 
+            cursor: pointer; 
+            font-size: 20px; 
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+            transition: all 0.3s ease;
+            pointer-events: auto;
+        }
+        
+        .vol-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.8);
+        }
+        
+        .vol-btn.muted {
+            border-color: #f00;
+            color: #f00;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+        }
+        
+        .screen { 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(0,0,0,0.95); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            z-index: 2000; 
+            text-align: center; 
+            padding: 20px; 
+        }
         
         h1.neon-title { 
-            font-size: 70px; margin-bottom: 20px;
-            background: linear-gradient(45deg, #0ff, #f0f, #ff0, #0ff);
-            background-size: 300% 300%;
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            animation: gradientShift 3s ease infinite;
-            text-transform: uppercase; letter-spacing: 4px; width: 100%;
-            filter: drop-shadow(0 0 20px rgba(0,255,255,0.5));
+            font-size: clamp(36px, 8vw, 80px); 
+            margin-bottom: 30px; 
+            background: linear-gradient(45deg, #0ff, #f0f, #ff0, #0ff); 
+            background-size: 300% 300%; 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+            background-clip: text;
+            animation: gradientShift 3s ease infinite; 
+            text-transform: uppercase; 
+            letter-spacing: 4px; 
+            width: 100%;
+            filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.5));
         }
-        @keyframes gradientShift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
-
+        
+        @keyframes gradientShift { 
+            0%, 100% { background-position: 0% 50%; } 
+            50% { background-position: 100% 50%; } 
+        }
+        
         .blue-info { 
-            color: #0ff; max-width: 850px; line-height: 1.4; margin-bottom: 30px; 
-            font-weight: bold; text-shadow: 0 0 15px rgba(0, 255, 255, 0.5); font-size: 24px; 
+            color: #0ff; 
+            max-width: 750px; 
+            line-height: 1.8; 
+            margin-bottom: 40px; 
+            font-weight: bold; 
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.6); 
+            font-size: clamp(16px, 4vw, 22px); 
         }
-
+        
         .btn { 
-            padding: 20px 60px; font-size: 28px; 
-            background: linear-gradient(45deg, #0ff, #f0f, #ff0, #0ff);
-            background-size: 300% 300%;
-            border: none; color: #000; border-radius: 12px; cursor: pointer; 
-            font-weight: bold; transition: 0.3s; box-shadow: 0 0 30px #0ff; 
-            text-transform: uppercase; animation: gradientShift 3s ease infinite, btnPulse 2s ease-in-out infinite;
+            padding: 20px 60px; 
+            font-size: clamp(22px, 5vw, 30px); 
+            background: linear-gradient(45deg, #0ff, #f0f, #ff0, #0ff); 
+            background-size: 300% 300%; 
+            border: none; 
+            color: #000; 
+            border-radius: 15px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            transition: 0.3s; 
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.8), 0 0 60px rgba(0, 255, 255, 0.4);
+            text-transform: uppercase; 
+            letter-spacing: 2px;
+            animation: gradientShift 3s ease infinite, btnPulse 2s ease-in-out infinite; 
         }
-        .btn:hover { transform: scale(1.1); box-shadow: 0 0 50px #0ff; }
-        @keyframes btnPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-
-        @media (max-width: 768px) {
-            h1.neon-title { font-size: 42px; }
-            .blue-info { font-size: 18px; }
-            .btn { padding: 15px 40px; font-size: 22px; }
+        
+        .btn:hover { 
+            transform: scale(1.1); 
+            box-shadow: 0 0 50px rgba(0, 255, 255, 1), 0 0 100px rgba(0, 255, 255, 0.6);
+            animation: gradientShift 1.5s ease infinite; 
         }
-
-        .results-box { border: 3px solid #0ff; padding: 30px; border-radius: 20px; background: rgba(0, 20, 40, 0.9); margin: 20px 0; min-width: 350px; box-shadow: 0 0 30px rgba(0,255,255,0.3); }
-        .results-box div { margin: 15px 0; font-size: 24px; color: #fff; text-align: left; }
-        .results-box span { color: #0ff; float: right; font-weight: bold; text-shadow: 0 0 10px #0ff; }
+        
+        @keyframes btnPulse { 
+            0%, 100% { transform: scale(1); } 
+            50% { transform: scale(1.05); } 
+        }
+        
+        .results-box { 
+            border: 3px solid #0ff; 
+            padding: 30px; 
+            border-radius: 20px; 
+            background: rgba(0, 20, 40, 0.9); 
+            margin: 20px 0; 
+            width: 90%; 
+            max-width: 450px; 
+            box-shadow: 0 0 30px rgba(0,255,255,0.4), inset 0 0 20px rgba(0,255,255,0.1);
+        }
+        
+        .results-box div { 
+            margin: 15px 0; 
+            font-size: 20px; 
+            color: #fff; 
+            text-align: left;
+            text-shadow: 0 0 10px #fff;
+        }
+        
+        .results-box span { 
+            color: #0ff; 
+            float: right; 
+            font-weight: bold;
+            font-size: 24px;
+            text-shadow: 0 0 15px #0ff;
+        }
     </style>
 </head>
 <body>
-
 <div id="background"></div>
+<div id="grid-overlay"></div>
+<div id="particles-bg"></div>
 <div id="custom-cursor"></div>
 <canvas id="game-canvas"></canvas>
 
 <div id="ui">
-    <div class="stat" style="color: #0ff;"><label>SCORE</label><span id="score">0</span></div>
-    <div class="stat" style="color: #f0f;"><label>TIME</label><span id="time">60</span></div>
-    <div class="stat" style="color: #ff0;"><label>COMBO</label><span id="combo">0</span></div>
+    <div class="stat" style="color: #0ff;">
+        <label>SCORE</label>
+        <span id="score">0</span>
+    </div>
+    <div class="stat" style="color: #f0f;">
+        <label>TIME</label>
+        <span id="time">60</span>
+    </div>
+    <div class="stat" style="color: #ff0;">
+        <label>COMBO</label>
+        <span id="combo">0</span>
+    </div>
 </div>
+
+<div id="combo-display"></div>
 
 <div id="controls">
     <button class="vol-btn" id="musicBtn" onclick="toggleMute('music')">🎵</button>
@@ -94,36 +339,38 @@
 <div id="startScreen" class="screen">
     <h1 class="neon-title">⚡ NEON SHOOTER ⚡</h1>
     <p class="blue-info">
-        MASTER YOUR PRECISION<br>
-        SPEED & COMBO ARE KEY<br><br>
-        AVOID RED TRAPS!
+        Master your precision across 9 unique target types!<br><br>
+        Small & fast = More points | Big & slow = Easy points<br><br>
+        Build hit streaks for massive multipliers and bonuses!<br><br>
+        Avoid red traps! Chain combos for ULTRA rewards!
     </p>
-    <button class="btn" onclick="startGame()">START MISSION</button>
+    <button class="btn" onclick="startGame()">START</button>
 </div>
 
 <div id="endScreen" class="screen" style="display:none;">
-    <h1 class="neon-title">🎯 MISSION OVER 🎯</h1>
+    <h1 class="neon-title">🎯 COMPLETE 🎯</h1>
     <div class="results-box">
         <div>FINAL SCORE: <span id="resScore">0</span></div>
         <div>ACCURACY: <span id="resAcc">0%</span></div>
-        <div>MAX COMBO: <span id="resCombo">0</span>X</div>
         <div>TOTAL HITS: <span id="resHits">0</span></div>
+        <div>MAX COMBO: <span id="resMaxCombo">0x</span></div>
     </div>
-    <button class="btn" onclick="startGame()">RETRY</button>
+    <button class="btn" onclick="startGame()">PLAY AGAIN</button>
 </div>
 
 <script>
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 const cursor = document.getElementById('custom-cursor');
+const comboDisplay = document.getElementById('combo-display');
 let width, height, dpr;
-
 const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 if (isTouchDevice) document.body.classList.add('is-touch');
 
-// SOUND ASSETS
+// Sound setup
 const EXPLOSION_SOUND = 'sounds/explosion1.mp3';
 const MUSIC_SOUND = 'sounds/electronic2.mp3';
+const CLOCK_SOUND = 'sounds/clock_ticking.mp3';
 
 const explosionChannels = [];
 for (let i = 0; i < 15; i++) {
@@ -132,18 +379,22 @@ for (let i = 0; i < 15; i++) {
     explosionChannels.push(audio);
 }
 let currentChannel = 0;
-
 const musicObj = new Audio(MUSIC_SOUND); 
+const clockObj = new Audio(CLOCK_SOUND);
 musicObj.loop = true;
 let sfxMuted = false;
 
 function toggleMute(type) {
     if(type === 'music') {
         musicObj.muted = !musicObj.muted;
-        document.getElementById('musicBtn').textContent = musicObj.muted ? '🔇' : '🎵';
+        const btn = document.getElementById('musicBtn');
+        btn.textContent = musicObj.muted ? '🔇' : '🎵';
+        btn.classList.toggle('muted', musicObj.muted);
     } else {
         sfxMuted = !sfxMuted;
-        document.getElementById('sfxBtn').textContent = sfxMuted ? '🔇' : '🔊';
+        const btn = document.getElementById('sfxBtn');
+        btn.textContent = sfxMuted ? '🔇' : '🔊';
+        btn.classList.toggle('muted', sfxMuted);
     }
 }
 
@@ -158,209 +409,455 @@ function playExplosion() {
 
 function fadeOutMusic() {
     const fadeInterval = setInterval(() => {
-        if (musicObj.volume > 0.05) {
-            musicObj.volume -= 0.05;
-        } else {
-            musicObj.pause();
-            musicObj.volume = 1;
-            clearInterval(fadeInterval);
-        }
+        if (musicObj.volume > 0.05) { musicObj.volume -= 0.05; } 
+        else { musicObj.pause(); musicObj.volume = 1; clearInterval(fadeInterval); }
     }, 100);
 }
 
-let targets = [], markers = [];
+// Create floating background particles
+function createBackgroundParticles() {
+    const particlesContainer = document.getElementById('particles-bg');
+    for (let i = 0; i < 15; i++) { // Reduced from 30 to 15
+        const particle = document.createElement('div');
+        particle.className = 'bg-particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.top = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 20 + 's';
+        particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+        
+        // Random colors for particles
+        const colors = ['#0ff', '#f0f', '#ff0', '#0f0'];
+        particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+        particle.style.boxShadow = `0 0 8px ${particle.style.background}`;
+        
+        particlesContainer.appendChild(particle);
+    }
+}
+createBackgroundParticles();
+
+// Game state
+let targets = [], markers = [], particles = [];
 let score = 0, combo = 0, maxCombo = 0, hits = 0, shots = 0, timeLeft = 60;
 let gameActive = false, lastTime = 0, spawnTimer = 0;
+let clockPlaying = false;
 
-// ENHANCED NEON ASSETS
-const SHAPES = ['circle', 'square', 'triangle', 'star', 'hexagon', 'cross', 'diamond', 'octagon', 'heart'];
+// Enhanced neon color palette with glow
+const SHAPES = ['circle', 'square', 'triangle', 'star', 'hexagon', 'cross', 'diamond', 'heart', 'octagon'];
 const NEON_PALETTE = [
-    {m:'#00ffff', d:'#004444'}, // Electric Cyan
-    {m:'#ff00ff', d:'#440044'}, // Plasma Purple
-    {m:'#ffff00', d:'#444400'}, // Laser Yellow
-    {m:'#00ff00', d:'#004400'}, // Toxic Green
-    {m:'#ff8800', d:'#442200'}, // Atomic Orange
-    {m:'#ffffff', d:'#444444'}, // Stark White
-    {m:'#ff0088', d:'#440022'}  // Hot Pink
+    {m:'#00ffff', d:'#006666', glow:'rgba(0, 255, 255, 0.8)'}, 
+    {m:'#ff00ff', d:'#660066', glow:'rgba(255, 0, 255, 0.8)'}, 
+    {m:'#ffff00', d:'#666600', glow:'rgba(255, 255, 0, 0.8)'}, 
+    {m:'#00ff00', d:'#006600', glow:'rgba(0, 255, 0, 0.8)'}, 
+    {m:'#ff8800', d:'#663300', glow:'rgba(255, 136, 0, 0.8)'}, 
+    {m:'#ff0088', d:'#660033', glow:'rgba(255, 0, 136, 0.8)'},
+    {m:'#88ff00', d:'#336600', glow:'rgba(136, 255, 0, 0.8)'},
+    {m:'#0088ff', d:'#003366', glow:'rgba(0, 136, 255, 0.8)'},
+    {m:'#ffffff', d:'#666666', glow:'rgba(255, 255, 255, 0.8)'}
 ];
+
+// Particle effect for hits
+class Particle {
+    constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 2 + Math.random() * 4;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+        this.life = 1;
+        this.color = color;
+        this.size = 2 + Math.random() * 3;
+    }
+    
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += 0.1; // gravity
+        this.life -= 0.02;
+    }
+    
+    draw() {
+        ctx.save();
+        ctx.globalAlpha = this.life;
+        ctx.fillStyle = this.color;
+        ctx.shadowBlur = 8; // Reduced from 15
+        ctx.shadowColor = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+}
 
 class Target {
     constructor(type = 'normal') {
         this.type = type;
         this.shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
         const roll = Math.random();
-        if (roll < 0.1) { this.size = 15; this.pts = 150; this.speed = 4.5; } 
-        else if (roll < 0.4) { this.size = 32; this.pts = 65; this.speed = 3.0; } 
-        else { this.size = 55; this.pts = 25; this.speed = 1.8; }
-
+        if (roll < 0.1) { this.size = 15; this.pts = 150; this.speed = 5.2; } 
+        else if (roll < 0.4) { this.size = 32; this.pts = 65; this.speed = 3.2; } 
+        else { this.size = 55; this.pts = 25; this.speed = 1.9; }
+        
         const c = NEON_PALETTE[Math.floor(Math.random() * NEON_PALETTE.length)];
         this.mainColor = type === 'trap' ? '#ff0000' : c.m;
-        this.darkColor = type === 'trap' ? '#440000' : c.d;
-        this.x = Math.random() * (window.innerWidth - 100) + 50;
-        this.y = Math.random() * (window.innerHeight - 200) + 100;
-        this.rot = 0; this.rotVel = (Math.random() - 0.5) * 0.18;
+        this.darkColor = type === 'trap' ? '#330000' : c.d;
+        this.glowColor = type === 'trap' ? 'rgba(255, 0, 0, 0.8)' : c.glow;
+        
+        this.x = Math.random() * (width - 100) + 50;
+        this.y = Math.random() * (height - 200) + 100;
+        this.rot = 0; 
+        this.rotVel = (Math.random() - 0.5) * 0.18;
+        
         const dir = Math.random() * Math.PI * 2;
-        this.vx = Math.cos(dir) * this.speed * (1 + (60 - timeLeft) / 55);
-        this.vy = Math.sin(dir) * this.speed * (1 + (60 - timeLeft) / 55);
+        this.vx = Math.cos(dir) * this.speed * (1 + (60 - timeLeft) / 45);
+        this.vy = Math.sin(dir) * this.speed * (1 + (60 - timeLeft) / 45);
         this.life = 1.0;
-        this.pulse = 0;
+        this.pulse = 0; // for pulsing glow effect
+        this.wasHit = false; // Track if player hit this target
     }
-
+    
     draw() {
-        this.pulse += 0.1;
-        const pulseAmt = Math.sin(this.pulse) * 5;
-        ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rot); ctx.globalAlpha = this.life;
+        this.pulse += 0.08;
+        const glowIntensity = 12 + Math.sin(this.pulse) * 3; // Reduced from 20 + 10
         
-        // NEON GLOW
-        ctx.shadowBlur = 15 + pulseAmt; 
-        ctx.shadowColor = this.mainColor;
+        ctx.save(); 
+        ctx.translate(this.x, this.y); 
+        ctx.rotate(this.rot); 
+        ctx.globalAlpha = this.life;
         
+        // Reduced glow effect
+        ctx.shadowBlur = glowIntensity;
+        ctx.shadowColor = this.glowColor;
+        
+        // Main shape (removed outer glow halo)
         const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size);
-        grad.addColorStop(0, this.mainColor); grad.addColorStop(1, this.darkColor);
-        ctx.fillStyle = grad;
-        ctx.strokeStyle = this.mainColor;
-        ctx.lineWidth = 3;
-
+        grad.addColorStop(0, this.mainColor); 
+        grad.addColorStop(1, this.darkColor);
+        ctx.fillStyle = grad; 
+        ctx.strokeStyle = this.mainColor; 
+        ctx.lineWidth = 2;
+        
         ctx.beginPath();
-        if(this.shape === 'square') ctx.rect(-this.size/2, -this.size/2, this.size, this.size);
-        else if(this.shape === 'star') {
-            for(let i=0; i<10; i++) {
-                let r = (i % 2 === 0) ? this.size : this.size/2.2;
-                ctx.lineTo(Math.cos(i*Math.PI/5 - Math.PI/2) * r, Math.sin(i*Math.PI/5 - Math.PI/2) * r);
+        this.drawShape(this.size);
+        ctx.fill(); 
+        ctx.stroke(); 
+        
+        ctx.restore();
+    }
+    
+    drawShape(size) {
+        if(this.shape === 'square') {
+            ctx.rect(-size/2, -size/2, size, size);
+        }
+        else if(this.shape === 'star') { 
+            for(let i=0; i<10; i++) { 
+                let r = (i % 2 === 0) ? size : size/2.2; 
+                ctx.lineTo(Math.cos(i*Math.PI/5 - Math.PI/2) * r, Math.sin(i*Math.PI/5 - Math.PI/2) * r); 
+            } 
+        }
+        else if(this.shape === 'heart') { 
+            ctx.moveTo(0, size/2); 
+            ctx.bezierCurveTo(-size, -size/2, -size/2, -size, 0, -size/4); 
+            ctx.bezierCurveTo(size/2, -size, size, -size/2, 0, size/2); 
+        }
+        else if(this.shape === 'diamond') { 
+            ctx.moveTo(0, -size); 
+            ctx.lineTo(size, 0); 
+            ctx.lineTo(0, size); 
+            ctx.lineTo(-size, 0); 
+        }
+        else if(this.shape === 'octagon') { 
+            for(let i=0; i<8; i++) ctx.lineTo(Math.cos(i*Math.PI/4) * size, Math.sin(i*Math.PI/4) * size); 
+        }
+        else if(this.shape === 'cross') { 
+            const w = size/2.5; 
+            ctx.rect(-w/2, -size, w, size*2); 
+            ctx.rect(-size, -w/2, size*2, w); 
+        }
+        else if(this.shape === 'hexagon') {
+            for(let i=0; i<6; i++) {
+                ctx.lineTo(Math.cos(i*Math.PI/3) * size, Math.sin(i*Math.PI/3) * size);
             }
         }
         else if(this.shape === 'triangle') {
-            ctx.moveTo(0, -this.size); ctx.lineTo(this.size, this.size); ctx.lineTo(-this.size, this.size);
+            for(let i=0; i<3; i++) {
+                ctx.lineTo(Math.cos(i*Math.PI*2/3 - Math.PI/2) * size, Math.sin(i*Math.PI*2/3 - Math.PI/2) * size);
+            }
         }
-        else if(this.shape === 'diamond') {
-            ctx.moveTo(0, -this.size); ctx.lineTo(this.size, 0); ctx.lineTo(0, this.size); ctx.lineTo(-this.size, 0);
+        else {
+            ctx.arc(0, 0, size, 0, Math.PI*2);
         }
-        else if(this.shape === 'heart') {
-            ctx.moveTo(0, this.size/2); ctx.bezierCurveTo(-this.size, -this.size/2, -this.size/2, -this.size, 0, -this.size/4); ctx.bezierCurveTo(this.size/2, -this.size, this.size, -this.size/2, 0, this.size/2);
-        }
-        else if(this.shape === 'octagon') {
-            for(let i=0; i<8; i++) ctx.lineTo(Math.cos(i*Math.PI/4) * this.size, Math.sin(i*Math.PI/4) * this.size);
-        }
-        else if(this.shape === 'cross') {
-            const w = this.size/2.5; ctx.rect(-w/2, -this.size, w, this.size*2); ctx.rect(-this.size, -w/2, this.size*2, w);
-        }
-        else ctx.arc(0, 0, this.size, 0, Math.PI*2);
-        
-        ctx.closePath(); 
-        ctx.fill();
-        ctx.stroke(); // Inner stroke for neon definition
-        ctx.restore();
     }
 }
 
 class Marker {
-    constructor(x, y, txt, color) { 
-        this.x = x; this.y = y; this.txt = txt; this.alpha = 1; this.scale = 1.5; this.color = color;
+    constructor(x, y, txt, color, isMilestone = false) { 
+        this.x = x; 
+        this.y = y; 
+        this.txt = txt; 
+        this.alpha = 1; 
+        this.color = color; 
+        this.scale = isMilestone ? 2 : 1; 
+        this.isMilestone = isMilestone; 
     }
+    
     draw() {
-        ctx.save(); ctx.globalAlpha = this.alpha; ctx.fillStyle = this.color;
-        // COOLER ANIMATION: Pops up then fades
-        ctx.font = `bold ${Math.floor(28 * this.scale)}px Courier New`; ctx.textAlign = 'center';
-        ctx.shadowBlur = 20; ctx.shadowColor = this.color;
-        ctx.fillText(this.txt, this.x, this.y); ctx.restore();
-        this.y -= 2.2; this.alpha -= 0.015; this.scale *= 0.985;
+        ctx.save(); 
+        ctx.globalAlpha = this.alpha; 
+        ctx.fillStyle = this.color;
+        const fontSize = Math.floor((this.isMilestone ? 40 : 28) * this.scale);
+        ctx.font = `bold ${fontSize}px Courier New`; 
+        ctx.textAlign = 'center';
+        ctx.shadowBlur = 20; 
+        ctx.shadowColor = this.color;
+        ctx.fillText(this.txt, this.x, this.y); 
+        ctx.restore();
+        this.y -= this.isMilestone ? 1.5 : 2.5; 
+        this.alpha -= 0.015; 
+        this.scale += 0.008;
     }
 }
 
 function resize() {
-    dpr = window.devicePixelRatio || 1;
-    width = window.innerWidth; height = window.innerHeight;
-    canvas.width = width * dpr; canvas.height = height * dpr;
-    canvas.style.width = width + 'px'; canvas.style.height = height + 'px';
+    dpr = window.devicePixelRatio || 1; 
+    width = window.innerWidth; 
+    height = window.innerHeight;
+    canvas.width = width * dpr; 
+    canvas.height = height * dpr;
+    canvas.style.width = width + 'px'; 
+    canvas.style.height = height + 'px';
     ctx.scale(dpr, dpr);
 }
-window.addEventListener('resize', resize); resize();
 
-window.addEventListener('mousemove', e => {
-    if(!isTouchDevice) {
-        cursor.style.left = e.clientX + 'px';
-        cursor.style.top = e.clientY + 'px';
-    }
+window.addEventListener('resize', resize); 
+resize();
+
+window.addEventListener('mousemove', e => { 
+    if(!isTouchDevice) { 
+        cursor.style.left = e.clientX + 'px'; 
+        cursor.style.top = e.clientY + 'px'; 
+    } 
 });
 
+function updateComboDisplay() {
+    const comboElement = document.getElementById('combo');
+    console.log('updateComboDisplay called - combo value:', combo);
+    if (comboElement) {
+        comboElement.textContent = combo;
+        console.log('Combo element updated to:', combo);
+    } else {
+        console.error('Combo element not found!');
+    }
+    
+    // Show combo milestone flash
+    if (combo > 0 && combo % 5 === 0) {
+        const comboFlash = document.getElementById('combo-display');
+        if (comboFlash) {
+            comboFlash.textContent = `${combo}X COMBO!`;
+            comboFlash.style.animation = 'none';
+            setTimeout(() => {
+                comboFlash.style.animation = 'comboFlash 0.5s ease-out';
+            }, 10);
+        }
+    }
+}
+
 function startGame() {
-    score = 0; combo = 0; maxCombo = 0; hits = 0; shots = 0; timeLeft = 60;
-    targets = []; markers = []; gameActive = true;
-    document.getElementById('startScreen').style.display = 'none';
+    score = 0; 
+    combo = 0; 
+    maxCombo = 0;
+    hits = 0; 
+    shots = 0; 
+    timeLeft = 60; 
+    targets = []; 
+    markers = []; 
+    particles = [];
+    gameActive = true;
+    clockPlaying = false;
+    
+    document.getElementById('startScreen').style.display = 'none'; 
     document.getElementById('endScreen').style.display = 'none';
-    document.body.classList.add('playing');
+    document.body.classList.add('playing'); 
     if(!isTouchDevice) cursor.style.display = 'flex';
-    musicObj.volume = 1;
+    
+    // Initialize UI displays
+    document.getElementById('score').textContent = '0';
+    document.getElementById('time').textContent = '60';
+    document.getElementById('combo').textContent = '0';
+    
+    musicObj.volume = 1; 
     musicObj.play().catch(()=>{});
+    
     requestAnimationFrame(gameLoop);
+    
     const timer = setInterval(() => { 
         if (!gameActive) { clearInterval(timer); return; } 
         timeLeft--; 
-        document.getElementById('time').textContent = timeLeft; 
-        if (timeLeft <= 0) {
-            fadeOutMusic();
+        document.getElementById('time').textContent = timeLeft;
+        
+        // Start clock sound at 5 seconds
+        if (timeLeft === 5 && !clockPlaying && !sfxMuted) {
+            clockObj.currentTime = 0;
+            clockObj.play().catch(()=>{});
+            clockPlaying = true;
+        }
+        
+        if (timeLeft <= 0) { 
+            fadeOutMusic(); 
+            clockObj.pause(); 
+            clockObj.currentTime = 0;
+            clockPlaying = false;
             setTimeout(endGame, 1000); 
+            clearInterval(timer); 
         } 
     }, 1000);
 }
 
-function endGame() {
+function endGame() { 
     gameActive = false; 
-    document.body.classList.remove('playing');
-    cursor.style.display = 'none';
-    document.getElementById('endScreen').style.display = 'flex';
-    document.getElementById('resScore').textContent = score;
-    document.getElementById('resAcc').textContent = Math.round((hits/Math.max(1, shots))*100) + '%';
-    document.getElementById('resCombo').textContent = maxCombo;
+    document.body.classList.remove('playing'); 
+    cursor.style.display = 'none'; 
+    
+    console.log('Game ended! Final stats:');
+    console.log('Score:', score);
+    console.log('Hits:', hits);
+    console.log('Shots:', shots);
+    console.log('Max Combo:', maxCombo);
+    
+    document.getElementById('endScreen').style.display = 'flex'; 
+    document.getElementById('resScore').textContent = score; 
+    document.getElementById('resAcc').textContent = Math.round((hits/Math.max(1, shots))*100) + '%'; 
     document.getElementById('resHits').textContent = hits;
+    document.getElementById('resMaxCombo').textContent = maxCombo + 'x';
 }
 
 function gameLoop(time) {
-    if (!gameActive) return;
-    const dt = time - lastTime; lastTime = time;
+    if (!gameActive) return; 
+    const dt = time - lastTime; 
+    lastTime = time; 
+    
+    // Clear canvas completely (no blur)
     ctx.clearRect(0, 0, width, height);
+    
     spawnTimer += dt;
-    if (spawnTimer > Math.max(250, 800 - (60 - timeLeft) * 10)) {
-        targets.push(new Target(Math.random() < 0.18 ? 'trap' : 'normal')); spawnTimer = 0;
+    if (spawnTimer > Math.max(240, 715 - (60 - timeLeft) * 10)) { 
+        targets.push(new Target(Math.random() < 0.15 ? 'trap' : 'normal')); 
+        spawnTimer = 0; 
     }
-    targets = targets.filter(t => {
-        t.x += t.vx; t.y += t.vy; t.rot += t.rotVel;
-        if (t.x < t.size || t.x > width - t.size) t.vx *= -1;
-        if (t.y < 90 || t.y > height - 100) t.vy *= -1;
-        t.life -= 0.0035;
-        if (t.life > 0) { t.draw(); return true; }
-        if (t.type === 'normal') combo = 0; 
+    
+    // Update and draw particles
+    particles = particles.filter(p => {
+        p.update();
+        if (p.life > 0) {
+            p.draw();
+            return true;
+        }
         return false;
     });
-    markers = markers.filter(m => { m.draw(); return m.alpha > 0; });
-    document.getElementById('score').textContent = score; 
+    
+    // Update and draw targets
+    targets = targets.filter(t => { 
+        t.x += t.vx; 
+        t.y += t.vy; 
+        t.rot += t.rotVel; 
+        if (t.x < t.size || t.x > width - t.size) t.vx *= -1; 
+        if (t.y < 80 || t.y > height - 100) t.vy *= -1; 
+        t.life -= 0.0035; 
+        if (t.life > 0) { 
+            t.draw(); 
+            return true; 
+        } 
+        // Only reset combo if target expired naturally (wasn't hit)
+        if (t.type === 'normal' && !t.wasHit) { 
+            combo = 0; 
+            console.log('Target expired (missed)! Combo reset to 0');
+            updateComboDisplay();
+        } 
+        return false; 
+    });
+    
+    // Draw markers
+    markers = markers.filter(m => { 
+        m.draw(); 
+        return m.alpha > 0; 
+    }); 
+    
+    // Update UI
+    document.getElementById('score').textContent = score;
     document.getElementById('combo').textContent = combo;
+    
     requestAnimationFrame(gameLoop);
 }
 
 function handleInput(x, y) {
-    if (!gameActive) return;
-    shots++; let hit = false;
+    if (!gameActive) return; 
+    shots++; 
+    let hit = false;
+    
     targets.sort((a,b)=>a.size-b.size).forEach(t => {
         if (hit) return;
         if (Math.hypot(t.x-x, t.y-y) < t.size + 25) {
-            hit = true; t.life = 0; 
+            hit = true; 
+            t.wasHit = true; // Mark as hit so combo doesn't reset
+            t.life = 0; 
             playExplosion();
+            
+            // Create particle explosion (reduced from 12 to 6)
+            for (let i = 0; i < 6; i++) {
+                particles.push(new Particle(t.x, t.y, t.mainColor));
+            }
+            
+            // Cursor hit effect
+            if (!isTouchDevice) {
+                cursor.classList.add('hit');
+                setTimeout(() => cursor.classList.remove('hit'), 150);
+            }
+            
             if (t.type === 'trap') { 
-                combo = 0; score = Math.max(0, score - 75); markers.push(new Marker(x, y, "-75", "#ff0000")); 
-            } else { 
+                combo = 0; 
+                console.log('Trap hit! Combo reset to 0');
+                score = Math.max(0, score - 60); 
+                markers.push(new Marker(x, y, "-60", "#ff0000"));
+                updateComboDisplay();
+            } 
+            else { 
                 hits++; 
-                combo++; 
-                // MAX COMBO TRACKING
-                if(combo > maxCombo) maxCombo = combo; 
+                combo++;
+                console.log('Hit! Combo increased to:', combo);
+                if (combo > maxCombo) {
+                    maxCombo = combo;
+                    console.log('New maxCombo:', maxCombo);
+                }
                 
-                const p = Math.round(t.pts * (1 + combo * 0.15)); 
-                score += p; 
-                markers.push(new Marker(x, y, `+${p}`, t.mainColor)); 
+                let bonus = 0; 
+                let milestoneText = "";
+                if (combo === 10) { bonus = 500; milestoneText = "10 HIT BONUS! +500"; }
+                else if (combo === 15) { bonus = 800; milestoneText = "15 HIT BONUS! +800"; }
+                else if (combo === 20) { bonus = 1200; milestoneText = "20 HIT BONUS! +1200"; }
+                else if (combo === 25) { bonus = 2000; milestoneText = "ULTRA COMBO! +2000"; }
+                
+                const basePts = Math.round(t.pts * (1 + combo * 0.12)); 
+                score += (basePts + bonus);
+                
+                const m = new Marker(x, y, `+${basePts}`, t.mainColor);
+                if (combo > 5) m.scale = 1.4; 
+                markers.push(m);
+                
+                if (bonus > 0) {
+                    markers.push(new Marker(x, y - 40, milestoneText, "#fff", true));
+                }
+                
+                // Update combo display
+                updateComboDisplay();
             }
         }
     });
-    if (!hit) combo = 0;
+    
+    if (!hit) { 
+        combo = 0;
+        console.log('Miss! Combo reset to 0');
+        updateComboDisplay();
+    }
 }
 
 canvas.addEventListener('mousedown', e => handleInput(e.clientX, e.clientY));

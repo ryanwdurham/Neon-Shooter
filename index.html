@@ -676,11 +676,11 @@ let currentDifficulty = 'normal';
 // Difficulty Settings
 const DIFFICULTY_SETTINGS = {
     easy: {
-        time: 90,
+        time: 60,  // Changed from 90 to 60 seconds
         sizeMultiplier: 1.2,
         speedMultiplier: 0.7,
         trapRate: 0.10,
-        targetLifetime: 0.0028,  // Slower decay = longer lifetime
+        targetLifetime: 0.0028,
         comboBonuses: {10: 500, 20: 1000, 30: 1500}
     },
     normal: {
@@ -696,7 +696,7 @@ const DIFFICULTY_SETTINGS = {
         sizeMultiplier: 0.8,
         speedMultiplier: 1.4,
         trapRate: 0.20,
-        targetLifetime: 0.0047,  // Faster decay = shorter lifetime
+        targetLifetime: 0.0047,
         comboBonuses: {15: 500, 25: 1000, 40: 2000, 60: 3500}
     }
 };
@@ -1130,19 +1130,34 @@ function gameLoop(time) {
     spawnTimer += dt;
     
     // Calculate base spawn rate with progressive difficulty
-    // Increased spawn rate (lower numbers = faster spawning)
     let spawnRate = Math.max(180, 650 - (settings.time - timeLeft) * 12);
     
-    // PEAK in the middle, then slight reduction at the very end
-    const finalPortion = settings.time === 90 ? 15 : 10; // Last 15s for Easy, 10s for Normal/Hard
-    if (timeLeft <= finalPortion) {
-        // Only reduce by 20% at the very end (less aggressive)
-        const reductionFactor = 1 + (0.2 * (finalPortion - timeLeft) / finalPortion);
+    // SMART SPAWN CONTROL: Reduce at 30s, then ramp back up to peak at 10s
+    if (timeLeft <= 30 && timeLeft > 10) {
+        // Between 30s and 10s: gradually REDUCE spawn rate
+        // At 30s: reduce by 30%, gradually back to normal by 10s
+        const midGameProgress = (30 - timeLeft) / 20; // 0 at 30s, 1 at 10s
+        const reductionFactor = 1 + (0.3 * (1 - midGameProgress)); // 1.3x at 30s, 1.0x at 10s
         spawnRate = spawnRate * reductionFactor;
+    } else if (timeLeft <= 10) {
+        // Last 10 seconds: PEAK ACTION - faster spawns!
+        const finalProgress = (10 - timeLeft) / 10; // 0 at 10s, 1 at 0s
+        const boostFactor = 1 - (0.2 * finalProgress); // 1.0x at 10s, 0.8x at 0s (faster)
+        spawnRate = spawnRate * boostFactor;
     }
     
-    // Reduced max targets by 2
-    const maxTargets = settings.time === 90 ? 10 : settings.time === 60 ? 12 : 10;
+    // Dynamic max targets based on time remaining
+    let maxTargets;
+    if (timeLeft > 30) {
+        // Early game: moderate targets
+        maxTargets = settings.time === 60 ? 8 : 9;
+    } else if (timeLeft > 10) {
+        // Mid game (30-10s): FEWER targets
+        maxTargets = settings.time === 60 ? 6 : 7;
+    } else {
+        // Final 10s: LOTS of targets for finale
+        maxTargets = settings.time === 60 ? 12 : settings.time === 45 ? 10 : 12;
+    }
     
     if (spawnTimer > spawnRate && targets.length < maxTargets) { 
         // 3% chance for golden target

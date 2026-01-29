@@ -1142,7 +1142,7 @@ function gameLoop(time) {
     }
     
     // Reduced max targets by 2
-    const maxTargets = settings.time === 90 ? 14 : settings.time === 60 ? 12 : 10;
+    const maxTargets = settings.time === 90 ? 10 : settings.time === 60 ? 12 : 10;
     
     if (spawnTimer > spawnRate && targets.length < maxTargets) { 
         // 3% chance for golden target

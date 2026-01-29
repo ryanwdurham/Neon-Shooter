@@ -711,7 +711,7 @@ function selectDifficulty(difficulty) {
     document.querySelector(`[data-difficulty="${difficulty}"]`).classList.add('selected');
 }
 
-// Enhanced neon color palette with glow
+// Enhanced neon color palette with glow (removed pink to avoid confusion with red traps)
 const SHAPES = ['circle', 'square', 'triangle', 'star', 'hexagon', 'cross', 'diamond', 'heart', 'octagon'];
 const NEON_PALETTE = [
     {m:'#00ffff', d:'#006666', glow:'rgba(0, 255, 255, 0.8)'}, 
@@ -719,9 +719,9 @@ const NEON_PALETTE = [
     {m:'#ffff00', d:'#666600', glow:'rgba(255, 255, 0, 0.8)'}, 
     {m:'#00ff00', d:'#006600', glow:'rgba(0, 255, 0, 0.8)'}, 
     {m:'#ff8800', d:'#663300', glow:'rgba(255, 136, 0, 0.8)'}, 
-    {m:'#ff0088', d:'#660033', glow:'rgba(255, 0, 136, 0.8)'},
     {m:'#88ff00', d:'#336600', glow:'rgba(136, 255, 0, 0.8)'},
     {m:'#0088ff', d:'#003366', glow:'rgba(0, 136, 255, 0.8)'},
+    {m:'#8800ff', d:'#330066', glow:'rgba(136, 0, 255, 0.8)'},
     {m:'#ffffff', d:'#666666', glow:'rgba(255, 255, 255, 0.8)'}
 ];
 
@@ -874,17 +874,49 @@ class Target {
         ctx.shadowBlur = glowIntensity;
         ctx.shadowColor = this.glowColor;
         
-        const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size);
-        grad.addColorStop(0, this.mainColor); 
-        grad.addColorStop(1, this.darkColor);
-        ctx.fillStyle = grad; 
-        ctx.strokeStyle = this.mainColor; 
-        ctx.lineWidth = this.type === 'golden' ? 3 : 2;
-        
-        ctx.beginPath();
-        this.drawShape(this.size);
-        ctx.fill(); 
-        ctx.stroke(); 
+        // Special styling for TRAPS - make them very distinct
+        if (this.type === 'trap') {
+            // Pulsing thick red border
+            const borderPulse = 4 + Math.sin(this.pulse * 2) * 2;
+            ctx.strokeStyle = '#ff0000';
+            ctx.lineWidth = borderPulse;
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = '#ff0000';
+            
+            // Dark red/black gradient fill
+            const trapGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size);
+            trapGrad.addColorStop(0, '#330000');
+            trapGrad.addColorStop(0.5, '#660000');
+            trapGrad.addColorStop(1, '#000000');
+            ctx.fillStyle = trapGrad;
+            
+            ctx.beginPath();
+            this.drawShape(this.size);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Add warning stripes pattern
+            ctx.globalAlpha = this.life * 0.3;
+            ctx.strokeStyle = '#ffff00';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            this.drawShape(this.size * 0.7);
+            ctx.stroke();
+            
+        } else {
+            // Normal targets (non-trap)
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size);
+            grad.addColorStop(0, this.mainColor); 
+            grad.addColorStop(1, this.darkColor);
+            ctx.fillStyle = grad; 
+            ctx.strokeStyle = this.mainColor; 
+            ctx.lineWidth = this.type === 'golden' ? 3 : 2;
+            
+            ctx.beginPath();
+            this.drawShape(this.size);
+            ctx.fill(); 
+            ctx.stroke();
+        }
         
         ctx.restore();
     }
@@ -1160,10 +1192,18 @@ function gameLoop(time) {
     }
     
     if (spawnTimer > spawnRate && targets.length < maxTargets) { 
+        // Adjust trap spawn rate based on time remaining
+        let trapSpawnRate = settings.trapRate;
+        
+        // REDUCE traps significantly in final 10 seconds (50% fewer traps)
+        if (timeLeft <= 10) {
+            trapSpawnRate = trapSpawnRate * 0.5;
+        }
+        
         // 3% chance for golden target
         if (Math.random() < 0.03) {
             targets.push(new Target('golden'));
-        } else if (Math.random() < settings.trapRate) {
+        } else if (Math.random() < trapSpawnRate) {
             targets.push(new Target('trap'));
         } else {
             targets.push(new Target('normal'));

@@ -1,818 +1,1537 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Fake Store API — QA Checkout Tester</title>
-
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-
-* {
-  box-sizing: border-box;
-}
-
-body { 
-  margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
-  min-height: 100vh;
-  color: #e2e8f0;
-}
-
-header { 
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
-  color: white;
-  padding: 32px 24px;
-  box-shadow: 0 4px 24px rgba(99, 102, 241, 0.3);
-  position: relative;
-  overflow: hidden;
-}
-
-header::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-  animation: pulse 8s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); opacity: 0.5; }
-  50% { transform: scale(1.1); opacity: 0.8; }
-}
-
-header h1 { 
-  margin: 0;
-  font-size: 32px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  text-shadow: 0 2px 12px rgba(0,0,0,0.2);
-  position: relative;
-  z-index: 1;
-}
-
-header p { 
-  margin: 8px 0 0;
-  opacity: 0.95;
-  font-size: 15px;
-  font-weight: 500;
-  position: relative;
-  z-index: 1;
-}
-
-main { 
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 24px;
-  padding: 24px;
-  max-width: 1600px;
-  margin: 0 auto;
-}
-
-.panel { 
-  background: rgba(30, 41, 59, 0.8);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(100, 116, 139, 0.2);
-  transition: all 0.3s ease;
-}
-
-.panel:hover {
-  box-shadow: 0 12px 48px rgba(99, 102, 241, 0.2);
-  border-color: rgba(139, 92, 246, 0.3);
-}
-
-h2 { 
-  margin-top: 0;
-  font-size: 20px;
-  font-weight: 700;
-  background: linear-gradient(135deg, #a78bfa 0%, #ec4899 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  padding-bottom: 12px;
-  border-bottom: 2px solid rgba(139, 92, 246, 0.3);
-  letter-spacing: -0.3px;
-}
-
-button { 
-  padding: 10px 18px;
-  border-radius: 8px;
-  border: none;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  color: white;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  font-family: 'Inter', sans-serif;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-  position: relative;
-  overflow: hidden;
-}
-
-button::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  transform: translate(-50%, -50%);
-  transition: width 0.6s, height 0.6s;
-}
-
-button:hover::before {
-  width: 300px;
-  height: 300px;
-}
-
-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
-}
-
-button:active {
-  transform: translateY(0);
-}
-
-button.danger { 
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-}
-
-button.danger:hover {
-  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
-}
-
-button.secondary { 
-  background: linear-gradient(135deg, #475569 0%, #334155 100%);
-  box-shadow: 0 4px 12px rgba(71, 85, 105, 0.3);
-}
-
-button.secondary:hover {
-  box-shadow: 0 6px 20px rgba(71, 85, 105, 0.5);
-}
-
-.products { 
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 16px;
-  margin-top: 16px;
-}
-
-.product { 
-  border: 1px solid rgba(100, 116, 139, 0.3);
-  border-radius: 12px;
-  padding: 16px;
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(8px);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.product::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6, #d946ef);
-  transform: scaleX(0);
-  transition: transform 0.3s ease;
-}
-
-.product:hover::before {
-  transform: scaleX(1);
-}
-
-.product:hover {
-  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
-  transform: translateY(-4px);
-  border-color: rgba(139, 92, 246, 0.5);
-}
-
-.product img { 
-  height: 140px;
-  object-fit: contain;
-  display: block;
-  margin: auto;
-  border-radius: 8px;
-  padding: 8px;
-}
-
-.product b {
-  font-size: 14px;
-  color: #f1f5f9;
-  display: block;
-  margin: 12px 0 8px;
-  line-height: 1.4;
-}
-
-.price { 
-  color: #10b981;
-  font-weight: 700;
-  font-size: 18px;
-  text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
-}
-
-.cart-item { 
-  font-size: 13px;
-  margin-bottom: 16px;
-  padding: 12px;
-  background: rgba(15, 23, 42, 0.5);
-  border-radius: 8px;
-  border: 1px solid rgba(100, 116, 139, 0.2);
-  transition: all 0.2s ease;
-}
-
-.cart-item:hover {
-  background: rgba(15, 23, 42, 0.7);
-  border-color: rgba(139, 92, 246, 0.3);
-}
-
-.cart-item b {
-  color: #a78bfa;
-  display: block;
-  margin-bottom: 8px;
-  font-size: 14px;
-}
-
-.api-console { 
-  background: #0a0e1a;
-  color: #94a3b8;
-  padding: 16px;
-  border-radius: 12px;
-  font-family: 'JetBrains Mono', Consolas, monospace;
-  font-size: 12px;
-  max-height: 400px;
-  overflow-y: auto;
-  border: 1px solid rgba(100, 116, 139, 0.3);
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.api-console::-webkit-scrollbar {
-  width: 8px;
-}
-
-.api-console::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.5);
-  border-radius: 4px;
-}
-
-.api-console::-webkit-scrollbar-thumb {
-  background: rgba(139, 92, 246, 0.5);
-  border-radius: 4px;
-}
-
-.api-console::-webkit-scrollbar-thumb:hover {
-  background: rgba(139, 92, 246, 0.7);
-}
-
-.api-console pre {
-  margin: 8px 0;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-}
-
-.pass { 
-  color: #10b981;
-  font-weight: 600;
-  text-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
-}
-
-.fail { 
-  color: #ef4444;
-  font-weight: 600;
-  text-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
-}
-
-footer { 
-  padding: 24px;
-  font-size: 13px;
-  text-align: center;
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(10px);
-  color: #94a3b8;
-  font-style: italic;
-  border-top: 1px solid rgba(100, 116, 139, 0.2);
-}
-
-label {
-  font-size: 13px;
-  color: #cbd5e1;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  margin-left: 12px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-}
-
-label:hover {
-  background: rgba(139, 92, 246, 0.1);
-}
-
-input[type="checkbox"] {
-  cursor: pointer;
-  width: 16px;
-  height: 16px;
-  accent-color: #8b5cf6;
-}
-
-.button-group {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
-  align-items: center;
-}
-
-hr {
-  border: none;
-  border-top: 1px solid rgba(139, 92, 246, 0.3);
-  margin: 16px 0;
-}
-
-#cart {
-  min-height: 60px;
-}
-
-.empty-cart {
-  color: #64748b;
-  font-style: italic;
-  text-align: center;
-  padding: 24px;
-  font-size: 14px;
-}
-
-.product button {
-  margin-top: 8px;
-  margin-right: 4px;
-  font-size: 12px;
-  padding: 6px 12px;
-}
-
-.console-wrapper {
-  margin: 0 24px 24px;
-}
-
-/* Toast Notifications */
-.toast-container {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.toast {
-  background: rgba(30, 41, 59, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
-  padding: 16px 20px;
-  min-width: 300px;
-  max-width: 400px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(100, 116, 139, 0.3);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  animation: slideIn 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.toast::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: #6366f1;
-}
-
-.toast.success::before {
-  background: #10b981;
-}
-
-.toast.error::before {
-  background: #ef4444;
-}
-
-.toast.warning::before {
-  background: #f59e0b;
-}
-
-.toast-icon {
-  font-size: 24px;
-  flex-shrink: 0;
-}
-
-.toast-content {
-  flex: 1;
-  color: #e2e8f0;
-}
-
-.toast-title {
-  font-weight: 600;
-  font-size: 14px;
-  margin-bottom: 4px;
-}
-
-.toast-message {
-  font-size: 13px;
-  opacity: 0.9;
-}
-
-.toast-close {
-  background: none;
-  border: none;
-  color: #94a3b8;
-  cursor: pointer;
-  font-size: 20px;
-  padding: 0;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: all 0.2s;
-  flex-shrink: 0;
-}
-
-.toast-close:hover {
-  background: rgba(100, 116, 139, 0.2);
-  color: #fff;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateX(400px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@keyframes slideOut {
-  to {
-    transform: translateX(400px);
-    opacity: 0;
-  }
-}
-
-.toast.removing {
-  animation: slideOut 0.3s ease forwards;
-}
-
-@media (max-width: 1024px) {
-  main {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>⚡ NEON SHOOTER ⚡</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body { position: fixed; width: 100%; height: 100%; overflow: hidden; background: #000; touch-action: none; }
+        body { font-family: 'Courier New', monospace; color: #0ff; }
+        body.playing:not(.is-touch) { cursor: none; }
+        
+        /* Animated Neon Background */
+        #background { 
+            position: fixed; 
+            inset: 0; 
+            background: 
+                radial-gradient(ellipse at 20% 30%, rgba(138, 43, 226, 0.3), transparent 50%), 
+                radial-gradient(ellipse at 80% 70%, rgba(0, 255, 255, 0.3), transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(255, 0, 128, 0.2), transparent 60%),
+                linear-gradient(180deg, #000814 0%, #000000 100%); 
+            z-index: -2;
+            animation: bgPulse 8s ease-in-out infinite;
+        }
+        
+        @keyframes bgPulse {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+        
+        /* Animated Grid Overlay */
+        #grid-overlay {
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 60px 60px;
+            z-index: -1;
+            animation: gridFloat 20s linear infinite;
+        }
+        
+        @keyframes gridFloat {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(60px, 60px); }
+        }
+        
+        /* Floating Particles */
+        #particles-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        .bg-particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #0ff;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #0ff;
+            opacity: 0.4;
+            animation: floatParticle 20s linear infinite;
+        }
+        
+        @keyframes floatParticle {
+            0% { transform: translateY(0) translateX(0); opacity: 0; }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
+            100% { transform: translateY(-100vh) translateX(50px); opacity: 0; }
+        }
+        
+        /* Combo Screen Glow */
+        #screen-glow {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 4;
+            opacity: 0;
+            box-shadow: inset 0 0 150px rgba(255, 215, 0, 0);
+            transition: all 0.3s ease;
+        }
+        
+        #screen-glow.active {
+            opacity: 1;
+            box-shadow: inset 0 0 150px rgba(255, 215, 0, 0.6);
+        }
+        
+        #game-canvas { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            z-index: 5; 
+            touch-action: none;
+            filter: drop-shadow(0 0 2px rgba(0, 255, 255, 0.3));
+        }
+        
+        #custom-cursor { 
+            width: 32px; 
+            height: 32px; 
+            border: 2px solid #0ff; 
+            border-radius: 50%; 
+            position: fixed; 
+            pointer-events: none; 
+            z-index: 9999; 
+            transform: translate(-50%, -50%); 
+            display: none; 
+            align-items: center; 
+            justify-content: center; 
+            box-shadow: 0 0 20px #0ff, 0 0 40px rgba(0, 255, 255, 0.5);
+            transition: all 0.1s ease;
+        }
+        
+        #custom-cursor::after { 
+            content: ''; 
+            width: 6px; 
+            height: 6px; 
+            background: #0ff; 
+            border-radius: 50%; 
+            box-shadow: 0 0 10px #0ff;
+        }
+        
+        #custom-cursor.hit {
+            transform: translate(-50%, -50%) scale(1.4);
+            border-color: #0f0;
+            box-shadow: 0 0 30px #0f0;
+        }
+        
+        #ui { 
+            position: fixed; 
+            top: env(safe-area-inset-top, 20px); 
+            left: 0; 
+            right: 0;
+            display: flex; 
+            justify-content: space-around; 
+            z-index: 100; 
+            pointer-events: none;
+            padding: 0 20px;
+        }
+        
+        .stat { 
+            text-align: center; 
+            text-shadow: 0 0 15px currentColor, 0 0 30px currentColor;
+            animation: statPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes statPulse {
+            0%, 100% { opacity: 0.95; }
+            50% { opacity: 1; }
+        }
+        
+        .stat label {
+            font-size: 14px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .stat span { 
+            font-size: 28px; 
+            font-weight: bold; 
+            color: #fff; 
+            display: block; 
+            text-shadow: 0 0 15px #fff, 0 0 30px currentColor;
+        }
+        
+        /* Combo Display Enhancement */
+        #combo-display {
+            position: fixed;
+            top: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 150;
+            font-size: 48px;
+            font-weight: bold;
+            color: #ff0;
+            text-shadow: 0 0 20px #ff0, 0 0 40px #ff0, 0 0 60px #ff0;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        #combo-display.show {
+            animation: comboFlash 0.6s ease-out;
+        }
+        
+        @keyframes comboFlash {
+            0% { opacity: 0; transform: translateX(-50%) scale(0.5); }
+            50% { opacity: 1; transform: translateX(-50%) scale(1.3); }
+            100% { opacity: 0; transform: translateX(-50%) scale(1); }
+        }
+        
+        /* Pause Button */
+        #pauseBtn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid #0ff;
+            background: rgba(0,0,0,0.7);
+            color: #0ff;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+            transition: all 0.3s ease;
+            display: none;
+            pointer-events: auto;
+        }
+        
+        #pauseBtn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.8);
+        }
+        
+        /* Pause Overlay */
+        #pauseOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 5000;
+        }
+        
+        #pauseOverlay h1 {
+            font-size: 72px;
+            color: #0ff;
+            text-shadow: 0 0 30px #0ff, 0 0 60px #0ff;
+            margin-bottom: 30px;
+            animation: pausePulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pausePulse {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+        
+        #pauseOverlay p {
+            font-size: 24px;
+            color: #fff;
+            text-shadow: 0 0 10px #fff;
+        }
+        
+        #controls { 
+            position: fixed; 
+            bottom: env(safe-area-inset-bottom, 20px); 
+            right: 20px; 
+            z-index: 1000; 
+            display: flex; 
+            gap: 10px; 
+        }
+        
+        .vol-btn { 
+            width: 50px; 
+            height: 50px; 
+            border-radius: 50%; 
+            border: 2px solid #0ff; 
+            background: rgba(0,0,0,0.7); 
+            color: #0ff; 
+            cursor: pointer; 
+            font-size: 20px; 
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+            transition: all 0.3s ease;
+            pointer-events: auto;
+        }
+        
+        .vol-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.8);
+        }
+        
+        .vol-btn.muted {
+            border-color: #f00;
+            color: #f00;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+        }
+        
+        .screen { 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(0,0,0,0.95); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: flex-start;
+            z-index: 2000; 
+            text-align: center; 
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        h1.neon-title { 
+            font-size: clamp(36px, 8vw, 80px); 
+            margin: 20px 0;
+            background: linear-gradient(45deg, #0ff, #f0f, #ff0, #0ff); 
+            background-size: 300% 300%; 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+            background-clip: text;
+            animation: gradientShift 3s ease infinite; 
+            text-transform: uppercase; 
+            letter-spacing: 4px; 
+            width: 100%;
+            filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.5));
+        }
+        
+        @keyframes gradientShift { 
+            0%, 100% { background-position: 0% 50%; } 
+            50% { background-position: 100% 50%; } 
+        }
+        
+        .blue-info { 
+            color: #0ff; 
+            max-width: 750px; 
+            line-height: 1.8; 
+            margin-bottom: 30px; 
+            font-weight: bold; 
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.6); 
+            font-size: clamp(16px, 4vw, 22px); 
+        }
+        
+        .btn { 
+            padding: 20px 60px; 
+            font-size: clamp(22px, 5vw, 30px); 
+            background: linear-gradient(45deg, #0ff, #f0f, #ff0, #0ff); 
+            background-size: 300% 300%; 
+            border: none; 
+            color: #000; 
+            border-radius: 15px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            transition: 0.3s; 
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.8), 0 0 60px rgba(0, 255, 255, 0.4);
+            text-transform: uppercase; 
+            letter-spacing: 2px;
+            animation: gradientShift 3s ease infinite, btnPulse 2s ease-in-out infinite;
+            margin: 10px 0;
+        }
+        
+        .btn:hover { 
+            transform: scale(1.1); 
+            box-shadow: 0 0 50px rgba(0, 255, 255, 1), 0 0 100px rgba(0, 255, 255, 0.6);
+            animation: gradientShift 1.5s ease infinite; 
+        }
+        
+        @keyframes btnPulse { 
+            0%, 100% { transform: scale(1); } 
+            50% { transform: scale(1.05); } 
+        }
+        
+        .results-box { 
+            border: 3px solid #0ff; 
+            padding: 30px; 
+            border-radius: 20px; 
+            background: rgba(0, 20, 40, 0.9); 
+            margin: 20px 0; 
+            width: 90%; 
+            max-width: 450px; 
+            box-shadow: 0 0 30px rgba(0,255,255,0.4), inset 0 0 20px rgba(0,255,255,0.1);
+        }
+        
+        .results-box div { 
+            margin: 15px 0; 
+            font-size: 20px; 
+            color: #fff; 
+            text-align: left;
+            text-shadow: 0 0 10px #fff;
+        }
+        
+        .results-box span { 
+            color: #0ff; 
+            float: right; 
+            font-weight: bold;
+            font-size: 24px;
+            text-shadow: 0 0 15px #0ff;
+        }
+        
+        /* New High Score Celebration */
+        #newHighScore {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 64px;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 0 30px #ffd700, 0 0 60px #ffd700, 0 0 90px #ffd700;
+            z-index: 10000;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        #newHighScore.show {
+            animation: highScoreCelebration 2s ease-out;
+        }
+        
+        @keyframes highScoreCelebration {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5) rotate(-10deg); }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1.3) rotate(5deg); }
+            40% { transform: translate(-50%, -50%) scale(1.1) rotate(-3deg); }
+            60% { transform: translate(-50%, -50%) scale(1.2) rotate(2deg); }
+            80% { opacity: 1; transform: translate(-50%, -50%) scale(1.15) rotate(0deg); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8) rotate(0deg); }
+        }
+        
+        /* High Scores Display */
+        .highscores-box {
+            border: 3px solid #f0f;
+            padding: 25px;
+            border-radius: 20px;
+            background: rgba(40, 0, 40, 0.9);
+            margin: 20px 0;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.4), inset 0 0 20px rgba(255, 0, 255, 0.1);
+        }
+        
+        .highscores-box h2 {
+            color: #f0f;
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px #f0f;
+            text-align: center;
+        }
+        
+        .score-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin: 8px 0;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            border-left: 4px solid #f0f;
+        }
+        
+        .score-entry.new-score {
+            border-left-color: #ffd700;
+            background: rgba(255, 215, 0, 0.1);
+            animation: highlightScore 1s ease-in-out infinite;
+        }
+        
+        @keyframes highlightScore {
+            0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.6); }
+        }
+        
+        .score-rank {
+            font-size: 24px;
+            font-weight: bold;
+            color: #f0f;
+            width: 40px;
+            text-shadow: 0 0 10px #f0f;
+        }
+        
+        .score-value {
+            font-size: 22px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 10px #fff;
+        }
+        
+        .score-entry.new-score .score-value {
+            color: #ffd700;
+            text-shadow: 0 0 15px #ffd700;
+        }
+        
+        /* Difficulty Selection Buttons */
+        .difficulty-btn {
+            padding: 15px 30px;
+            font-size: clamp(16px, 4vw, 20px);
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #0ff;
+            border-radius: 10px;
+            color: #0ff;
+            cursor: pointer;
+            font-weight: bold;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+        }
+        
+        .difficulty-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.6);
+            background: rgba(0, 255, 255, 0.1);
+        }
+        
+        .difficulty-btn.selected {
+            background: linear-gradient(45deg, #0ff, #f0f);
+            color: #000;
+            border-color: #fff;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.8);
+            transform: scale(1.1);
+        }
+        
+        .difficulty-btn[data-difficulty="easy"].selected {
+            background: linear-gradient(45deg, #0f0, #0ff);
+        }
+        
+        .difficulty-btn[data-difficulty="hard"].selected {
+            background: linear-gradient(45deg, #f00, #f0f);
+        }
+    </style>
 </head>
 <body>
-<div class="toast-container" id="toastContainer"></div>
+<div id="background"></div>
+<div id="grid-overlay"></div>
+<div id="particles-bg"></div>
+<div id="screen-glow"></div>
+<div id="custom-cursor"></div>
+<canvas id="game-canvas"></canvas>
 
-<header>
-  <h1>🛒 Fake Store API — QA Checkout Tester 💻</h1>
-  <p>API-first demo • Auth • Assertions • Failure handling</p>
-</header>
+<button id="pauseBtn" onclick="togglePause()">⏸️</button>
 
-<main>
-
-<div class="panel">
-  <h2>Products</h2>
-  <div class="button-group">
-    <button onclick="login()">🔐 Login</button>
-    <button onclick="loadProducts()">📦 Load Products</button>
-    <label>
-      <input type="checkbox" id="failToggle" /> Simulate API Failure
-    </label>
-  </div>
-  <div class="products" id="products"></div>
+<div id="ui">
+    <div class="stat" style="color: #0ff;">
+        <label>SCORE</label>
+        <span id="score">0</span>
+    </div>
+    <div class="stat" style="color: #f0f;">
+        <label>TIME</label>
+        <span id="time">60</span>
+    </div>
+    <div class="stat" style="color: #ff0;">
+        <label>COMBO</label>
+        <span id="combo">0</span>
+    </div>
 </div>
 
-<div class="panel">
-  <h2>Shopping Cart</h2>
-  <div id="cart" class="empty-cart">Cart is empty</div>
-  <div class="button-group" style="margin-top: 16px;">
-    <button class="secondary" onclick="syncCart()">🔄 Sync Cart (PUT)</button>
-    <button class="danger" onclick="checkout()">💳 Checkout</button>
-  </div>
+<div id="combo-display"></div>
+<div id="newHighScore">🎉 NEW HIGH SCORE! 🎉</div>
+
+<div id="pauseOverlay">
+    <h1>⏸️ PAUSED</h1>
+    <p>Press SPACE to resume</p>
 </div>
 
-</main>
-
-<div class="panel console-wrapper">
-  <h2>API Response & Assertions</h2>
-  <div class="api-console" id="console">Waiting for API calls...</div>
+<div id="controls">
+    <button class="vol-btn" id="musicBtn" onclick="toggleMute('music')">🎵</button>
+    <button class="vol-btn" id="sfxBtn" onclick="toggleMute('sfx')">🔊</button>
 </div>
 
+<div id="startScreen" class="screen">
+    <h1 class="neon-title">⚡ NEON SHOOTER ⚡</h1>
+    <p class="blue-info">
+        Hit targets to score! Small = More points | Big = Easy points<br>
+        Build combos for bonuses • Avoid red traps • 🌟 Golden = 2x points
+    </p>
+    
+    <div style="font-size: 22px; margin: 30px 0 20px 0; color: #0ff; text-shadow: 0 0 10px #0ff; font-weight: bold;">
+        Choose Your Challenge:
+    </div>
+    
+    <div id="difficultyButtons" style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-bottom: 35px;">
+        <button class="difficulty-btn" data-difficulty="easy" onclick="selectDifficulty('easy')">EASY</button>
+        <button class="difficulty-btn selected" data-difficulty="normal" onclick="selectDifficulty('normal')">NORMAL</button>
+        <button class="difficulty-btn" data-difficulty="hard" onclick="selectDifficulty('hard')">HARD</button>
+    </div>
+    
+    <button class="btn" onclick="startGame()">START GAME</button>
+</div>
 
+<div id="endScreen" class="screen" style="display:none;">
+    <h1 class="neon-title">🎯 COMPLETE 🎯</h1>
+    <div class="results-box">
+        <div>FINAL SCORE: <span id="resScore">0</span></div>
+        <div>ACCURACY: <span id="resAcc">0%</span></div>
+        <div>TOTAL HITS: <span id="resHits">0</span></div>
+        <div>MAX COMBO: <span id="resMaxCombo">0x</span></div>
+    </div>
+    <button class="btn" onclick="startGame()">PLAY AGAIN</button>
+    
+    <div class="highscores-box" id="highScoresDisplay">
+        <h2>🏆 TOP 5 SCORES 🏆</h2>
+        <div id="scoresList"></div>
+    </div>
+</div>
 
 <script>
-const API = "https://fakestoreapi.com";
-const cart = [];
-const cache = {};
-let token = null;
+const canvas = document.getElementById('game-canvas');
+const ctx = canvas.getContext('2d');
+const cursor = document.getElementById('custom-cursor');
+const comboDisplay = document.getElementById('combo-display');
+const screenGlow = document.getElementById('screen-glow');
+const newHighScoreEl = document.getElementById('newHighScore');
+let width, height, dpr;
+const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+if (isTouchDevice) document.body.classList.add('is-touch');
 
-// Toast Notification System
-function showToast(message, type = 'info', title = '') {
-  const container = document.getElementById('toastContainer');
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  
-  const icons = {
-    success: '✅',
-    error: '❌',
-    warning: '⚠️',
-    info: 'ℹ️'
-  };
-  
-  const titles = {
-    success: title || 'Success',
-    error: title || 'Error',
-    warning: title || 'Warning',
-    info: title || 'Info'
-  };
-  
-  toast.innerHTML = `
-    <div class="toast-icon">${icons[type]}</div>
-    <div class="toast-content">
-      <div class="toast-title">${titles[type]}</div>
-      <div class="toast-message">${message}</div>
-    </div>
-    <button class="toast-close" onclick="removeToast(this)">×</button>
-  `;
-  
-  container.appendChild(toast);
-  
-  setTimeout(() => {
-    removeToast(toast.querySelector('.toast-close'));
-  }, 4000);
+// Sound setup
+const EXPLOSION_SOUND = 'sounds/explosion1.mp3';
+const MUSIC_SOUND = 'sounds/electronic2.mp3';
+const CLOCK_SOUND = 'sounds/clock_ticking.mp3';
+
+const explosionChannels = [];
+for (let i = 0; i < 15; i++) {
+    const audio = new Audio(EXPLOSION_SOUND);
+    audio.preload = 'auto';
+    explosionChannels.push(audio);
+}
+let currentChannel = 0;
+const musicObj = new Audio(MUSIC_SOUND); 
+const clockObj = new Audio(CLOCK_SOUND);
+musicObj.loop = true;
+let sfxMuted = false;
+
+function toggleMute(type) {
+    if(type === 'music') {
+        musicObj.muted = !musicObj.muted;
+        const btn = document.getElementById('musicBtn');
+        btn.textContent = musicObj.muted ? '🔇' : '🎵';
+        btn.classList.toggle('muted', musicObj.muted);
+    } else {
+        sfxMuted = !sfxMuted;
+        const btn = document.getElementById('sfxBtn');
+        btn.textContent = sfxMuted ? '🔇' : '🔊';
+        btn.classList.toggle('muted', sfxMuted);
+    }
 }
 
-function removeToast(btn) {
-  const toast = btn.parentElement;
-  toast.classList.add('removing');
-  setTimeout(() => toast.remove(), 300);
+function playExplosion() {
+    if(sfxMuted) return;
+    const audio = explosionChannels[currentChannel];
+    audio.currentTime = 0;
+    audio.volume = 0.7;
+    audio.play().catch(()=>{});
+    currentChannel = (currentChannel + 1) % explosionChannels.length;
 }
 
-// API logging and assertions
-function log({method, url, status, req, res, error, startTime}) {
-  const endTime = new Date();
-  const duration = startTime ? endTime - startTime : 0;
+function fadeOutMusic() {
+    const fadeInterval = setInterval(() => {
+        if (musicObj.volume > 0.05) { musicObj.volume -= 0.05; } 
+        else { musicObj.pause(); musicObj.volume = 1; clearInterval(fadeInterval); }
+    }, 100);
+}
 
-  let outcome = "";
-  if (error) outcome = "❌ API Failed";
-  else if (status >= 400) outcome = "❌ API Error";
-  else outcome = "✅ Success";
+// Create floating background particles
+function createBackgroundParticles() {
+    const particlesContainer = document.getElementById('particles-bg');
+    for (let i = 0; i < 15; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'bg-particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.top = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 20 + 's';
+        particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+        
+        const colors = ['#0ff', '#f0f', '#ff0', '#0f0'];
+        particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+        particle.style.boxShadow = `0 0 8px ${particle.style.background}`;
+        
+        particlesContainer.appendChild(particle);
+    }
+}
+createBackgroundParticles();
 
-  // Compute total cart value if products exist
-  let total = null;
-  if (req && req.products) {
-    total = req.products.reduce((sum, p) => {
-      const prod = cache[p.productId];
-      return sum + (prod ? prod.price * p.quantity : 0);
-    }, 0);
-  }
+// Game state
+let targets = [], markers = [], particles = [];
+let score = 0, combo = 0, maxCombo = 0, hits = 0, shots = 0, timeLeft = 60;
+let gameActive = false, gamePaused = false, lastTime = 0, spawnTimer = 0;
+let clockPlaying = false;
+let timerInterval;
+let currentDifficulty = 'normal';
+let currentTheme = 0;
 
-  // Enrich request with product titles for clarity
-  let displayReq = req;
-  if (req && req.products) {
-    displayReq = {...req};
-    displayReq.products = req.products.map(p => {
-      const prod = cache[p.productId];
-      return {
-        productId: p.productId,
-        title: prod ? prod.title : "Unknown",
-        quantity: p.quantity,
-        price: prod ? prod.price : "N/A"
-      };
+// Background Themes - each game gets random theme that changes mid-game
+const BG_THEMES = [
+    {
+        name: 'Cyber Purple',
+        gradient1: 'rgba(138, 43, 226, 0.3)',
+        gradient2: 'rgba(0, 255, 255, 0.3)',
+        gradient3: 'rgba(255, 0, 128, 0.2)'
+    },
+    {
+        name: 'Neon Blue',
+        gradient1: 'rgba(0, 136, 255, 0.3)',
+        gradient2: 'rgba(0, 255, 255, 0.3)',
+        gradient3: 'rgba(0, 100, 200, 0.2)'
+    },
+    {
+        name: 'Electric Green',
+        gradient1: 'rgba(0, 255, 100, 0.3)',
+        gradient2: 'rgba(136, 255, 0, 0.3)',
+        gradient3: 'rgba(0, 200, 100, 0.2)'
+    },
+    {
+        name: 'Hot Pink',
+        gradient1: 'rgba(255, 0, 128, 0.3)',
+        gradient2: 'rgba(255, 0, 255, 0.3)',
+        gradient3: 'rgba(200, 0, 100, 0.2)'
+    },
+    {
+        name: 'Golden Sunset',
+        gradient1: 'rgba(255, 136, 0, 0.3)',
+        gradient2: 'rgba(255, 215, 0, 0.3)',
+        gradient3: 'rgba(200, 100, 0, 0.2)'
+    },
+    {
+        name: 'Deep Ocean',
+        gradient1: 'rgba(0, 50, 150, 0.3)',
+        gradient2: 'rgba(0, 150, 200, 0.3)',
+        gradient3: 'rgba(0, 100, 150, 0.2)'
+    }
+];
+
+function setBackgroundTheme(themeIndex) {
+    const theme = BG_THEMES[themeIndex];
+    const bg = document.getElementById('background');
+    bg.style.background = `
+        radial-gradient(ellipse at 20% 30%, ${theme.gradient1}, transparent 50%), 
+        radial-gradient(ellipse at 80% 70%, ${theme.gradient2}, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, ${theme.gradient3}, transparent 60%),
+        linear-gradient(180deg, #000814 0%, #000000 100%)
+    `;
+}
+
+// Difficulty Settings
+const DIFFICULTY_SETTINGS = {
+    easy: {
+        time: 60,  // Changed from 90 to 60 seconds
+        sizeMultiplier: 1.2,
+        speedMultiplier: 0.7,
+        trapRate: 0.10,
+        targetLifetime: 0.0028,
+        comboBonuses: {10: 500, 20: 1000, 30: 1500}
+    },
+    normal: {
+        time: 60,
+        sizeMultiplier: 1.0,
+        speedMultiplier: 1.0,
+        trapRate: 0.15,
+        targetLifetime: 0.0035,
+        comboBonuses: {10: 500, 15: 800, 20: 1200, 25: 2000}
+    },
+    hard: {
+        time: 45,
+        sizeMultiplier: 0.8,
+        speedMultiplier: 1.4,
+        trapRate: 0.20,
+        targetLifetime: 0.0047,
+        comboBonuses: {15: 500, 25: 1000, 40: 2000, 60: 3500}
+    }
+};
+
+function selectDifficulty(difficulty) {
+    currentDifficulty = difficulty;
+    
+    // Update button states
+    document.querySelectorAll('.difficulty-btn').forEach(btn => {
+        btn.classList.remove('selected');
     });
-  }
-
-  // Assertions
-  const checks = [
-    {name: "Status < 400", ok: status && status < 400},
-    {name: "Response not empty", ok: res != null},
-    {name: "Cart total matches sum", ok: total === null || total >= 0}
-  ];
-
-  const assertionsHTML = checks.map(c =>
-    `<span class="${c.ok ? 'pass' : 'fail'}">${c.ok ? '✓' : '✗'} ${c.name}</span>`
-  ).join("<br/>");
-
-  document.getElementById("console").innerHTML = `
-<b>Time:</b> ${endTime.toLocaleTimeString()}<br/>
-<b>Duration:</b> ${duration} ms<br/>
-<b>Method:</b> ${method}<br/>
-<b>Endpoint:</b> ${url}<br/>
-<b>Status:</b> ${status ? status : "ERROR"}<br/>
-<b>Outcome:</b> ${outcome}<br/>
-${displayReq ? `<b>Request:</b><pre>${JSON.stringify(displayReq,null,2)}</pre>` : ""}
-<b>Response:</b><pre>${res ? JSON.stringify(res,null,2) : error}</pre>
-${total !== null ? `<b>Total Cart Value:</b> $${total.toFixed(2)}<br/>` : ""}
-<b>Assertions:</b><br/>${assertionsHTML}
-`;
+    document.querySelector(`[data-difficulty="${difficulty}"]`).classList.add('selected');
 }
 
-// Helper to simulate failure
-function failMode(url){
-  return document.getElementById("failToggle").checked ? url + "_fail_test_404" : url;
+// Enhanced neon color palette with glow (removed pink to avoid confusion with red traps)
+const SHAPES = ['circle', 'square', 'triangle', 'star', 'hexagon', 'cross', 'diamond', 'heart', 'octagon'];
+const NEON_PALETTE = [
+    {m:'#00ffff', d:'#006666', glow:'rgba(0, 255, 255, 0.8)'}, 
+    {m:'#ff00ff', d:'#660066', glow:'rgba(255, 0, 255, 0.8)'}, 
+    {m:'#ffff00', d:'#666600', glow:'rgba(255, 255, 0, 0.8)'}, 
+    {m:'#00ff00', d:'#006600', glow:'rgba(0, 255, 0, 0.8)'}, 
+    {m:'#ff8800', d:'#663300', glow:'rgba(255, 136, 0, 0.8)'}, 
+    {m:'#88ff00', d:'#336600', glow:'rgba(136, 255, 0, 0.8)'},
+    {m:'#0088ff', d:'#003366', glow:'rgba(0, 136, 255, 0.8)'},
+    {m:'#8800ff', d:'#330066', glow:'rgba(136, 0, 255, 0.8)'},
+    {m:'#ffffff', d:'#666666', glow:'rgba(255, 255, 255, 0.8)'}
+];
+
+// HIGH SCORE SYSTEM
+function getHighScores() {
+    const scores = localStorage.getItem('neonShooterHighScores');
+    return scores ? JSON.parse(scores) : [];
 }
 
-// LOGIN
-async function login() {
-showToast("Successfully logged in!", "success", "Authentication");
-  const url = `${API}/auth/login`;
-  const body = { username: "mor_2314", password: "83r5^_" };
-  const startTime = new Date();
-  try {
-    const r = await fetch(url, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(body) });
-    const d = await r.json();
-    token = d.token;
-    log({method:"POST", url, status:r.status, req:body, res:d, startTime});
-  } catch(err) {
-showToast("Login failed. Please try again.", "error", "Authentication");
-    log({method:"POST", url, error:err, startTime});
-  }
-}
-
-// LOAD ALL PRODUCTS OR FILTERED BY CATEGORY
-async function loadProducts(category=null) {
-  let url = category ? `${API}/products/category/${category}` : `${API}/products`;
-  url = failMode(url);
-  const startTime = new Date();
-  try {
-    const r = await fetch(url);
-    if(!r.ok) throw new Error("HTTP "+r.status);
-    const d = await r.json();
-    log({method:"GET", url, status:r.status, res:d, startTime});
-
-    const p = document.getElementById("products"); p.innerHTML="";
-    (Array.isArray(d) ? d : []).forEach(x=>{
-      cache[x.id] = x;
-      p.innerHTML += `
-        <div class="product">
-          <img src="${x.image}">
-          <b>${x.title}</b><br/>
-          <span class="price">$${x.price}</span><br/>
-          <button onclick="add(${x.id})">➕ Add</button>
-          <button onclick="viewDetails(${x.id})">👁️ Details</button>
-        </div>`;
+function saveHighScore(newScore) {
+    let scores = getHighScores();
+    scores.push({
+        score: newScore,
+        date: new Date().toLocaleDateString(),
+        combo: maxCombo
     });
-  } catch(err){
-    log({method:"GET", url, error:err, startTime});
-  }
+    scores.sort((a, b) => b.score - a.score);
+    scores = scores.slice(0, 5); // Keep top 5
+    localStorage.setItem('neonShooterHighScores', JSON.stringify(scores));
+    return scores;
 }
 
-// FETCH PRODUCT DETAILS
-async function viewDetails(id) {
-  let url = `${API}/products/${id}`;
-  url = failMode(url);
-  const startTime = new Date();
-  try {
-    const r = await fetch(url);
-    if(!r.ok) throw new Error("HTTP "+r.status);
-    const d = await r.json();
-    log({method:"GET", url, status:r.status, res:d, startTime});
-    alert(`Product Details:\nTitle: ${d.title}\nPrice: $${d.price}\nCategory: ${d.category}\nRating: ${d.rating.rate} (${d.rating.count} reviews)`);
-  } catch(err){
-    log({method:"GET", url, error:err, startTime});
-    showToast("Failed to fetch product details", "error");
-  }
+function isHighScore(newScore) {
+    const scores = getHighScores();
+    if (scores.length < 5) return true;
+    return newScore > scores[scores.length - 1].score;
 }
 
-// LOAD CATEGORIES
-async function loadCategories() {
-  let url = `${API}/products/categories`;
-  url = failMode(url);
-  const startTime = new Date();
-  try {
-    const r = await fetch(url);
-    if(!r.ok) throw new Error("HTTP "+r.status);
-    const d = await r.json();
-    log({method:"GET", url, status:r.status, res:d, startTime});
-
-    const catDiv = document.getElementById("categories"); 
-    catDiv.innerHTML = `<button onclick="loadProducts()">All</button>`;
-    d.forEach(c => {
-      catDiv.innerHTML += `<button onclick="loadProducts('${c}')">${c}</button>`;
+function displayHighScores(currentScore = null) {
+    const scores = getHighScores();
+    const scoresList = document.getElementById('scoresList');
+    scoresList.innerHTML = '';
+    
+    if (scores.length === 0) {
+        scoresList.innerHTML = '<div style="text-align: center; color: #888; padding: 20px;">No high scores yet!</div>';
+        return;
+    }
+    
+    scores.forEach((scoreEntry, index) => {
+        const div = document.createElement('div');
+        div.className = 'score-entry';
+        if (currentScore && scoreEntry.score === currentScore) {
+            div.classList.add('new-score');
+        }
+        
+        const rank = index + 1;
+        const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
+        
+        div.innerHTML = `
+            <span class="score-rank">${medal}</span>
+            <span class="score-value">${scoreEntry.score.toLocaleString()}</span>
+        `;
+        scoresList.appendChild(div);
     });
-  } catch(err){
-    log({method:"GET", url, error:err, startTime});
-  }
 }
 
-// CART MANAGEMENT
-function add(id){
-  const e = cart.find(i => i.id===id);
-  e ? e.qty++ : cart.push({id, qty:1});
-  render();
-  flashProduct(id);
+// Particle effect for hits
+class Particle {
+    constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 2 + Math.random() * 4;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+        this.life = 1;
+        this.color = color;
+        this.size = 2 + Math.random() * 3;
+    }
+    
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += 0.1;
+        this.life -= 0.02;
+    }
+    
+    draw() {
+        ctx.save();
+        ctx.globalAlpha = this.life;
+        ctx.fillStyle = this.color;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
 }
-function iQty(id,n){ const i = cart.find(x=>x.id===id); if(i && i.qty+n>0){ i.qty+=n; render(); } }
-function del(id){ cart.splice(cart.findIndex(x=>x.id===id),1); render(); }
-function render(){
-  const c = document.getElementById("cart");
-  if(!cart.length){ c.innerHTML = '<div class="empty-cart">Cart is empty</div>'; return; }
-  let t=0;
-  c.innerHTML = cart.map(i=>{
-    const p = cache[i.id];
-    const s = p.price*i.qty; t+=s;
-    return `<div class="cart-item">
-      <b>${p.title}</b>
-      <div style="margin-top: 8px;">
-        <button onclick="iQty(${i.id},-1)">−</button>
-        <span style="margin: 0 8px; font-weight: 600;">${i.qty}</span>
-        <button onclick="iQty(${i.id},1)">+</button>
-        <span style="float: right; color: #10b981; font-weight: 700;">$${s.toFixed(2)}</span>
-        <button class="danger" onclick="del(${i.id})" style="float: right; margin-right: 8px;">🗑️</button>
-      </div>
-    </div>`;
-  }).join("") + `<hr><div style="text-align: right; font-size: 18px;"><b>Total: <span style="color: #10b981;">$${t.toFixed(2)}</span></b></div>`;
+
+// Powerup state
+let activePowerups = {
+    slowTime: false,
+    freeze: false,
+    clearScreen: false
+};
+
+let powerupTimers = {
+    slowTime: 0,
+    freeze: 0
+};
+
+function activatePowerup(type) {
+    if (type === 'slowTime') {
+        activePowerups.slowTime = true;
+        powerupTimers.slowTime = 5000; // 5 seconds
+        showPowerupIndicator('⏱️ SLOW TIME!', '#00ffff');
+    } else if (type === 'freeze') {
+        activePowerups.freeze = true;
+        powerupTimers.freeze = 3000; // 3 seconds
+        showPowerupIndicator('❄️ FREEZE!', '#88ffff');
+    } else if (type === 'clearScreen') {
+        // Immediately clear all non-golden targets
+        targets = targets.filter(t => {
+            if (t.type !== 'golden' && t.type !== 'powerup') {
+                // Add explosion particles
+                for (let i = 0; i < 8; i++) {
+                    particles.push(new Particle(t.x, t.y, t.mainColor));
+                }
+                return false;
+            }
+            return true;
+        });
+        showPowerupIndicator('💥 CLEAR SCREEN!', '#ffff00');
+        score += 100; // Bonus points
+    }
 }
 
-// SYNC CART VIA PUT
-async function syncCart() {
-  if (!cart.length) { showToast("Cart is empty. Add items first!", "warning", "Cart"); }
+function showPowerupIndicator(text, color) {
+    const indicator = document.getElementById('powerupIndicator');
+    indicator.textContent = text;
+    indicator.style.color = color;
+    indicator.style.textShadow = `0 0 20px ${color}, 0 0 40px ${color}`;
+    indicator.classList.add('active');
+    
+    setTimeout(() => {
+        indicator.classList.remove('active');
+    }, 2000);
+}
 
-  let url = `${API}/carts/1`;
-  if (document.getElementById("failToggle").checked) url += "_fail_test_404";
+function updatePowerups(dt) {
+    // Update powerup timers
+    if (activePowerups.slowTime) {
+        powerupTimers.slowTime -= dt;
+        if (powerupTimers.slowTime <= 0) {
+            activePowerups.slowTime = false;
+        }
+    }
+    
+    if (activePowerups.freeze) {
+        powerupTimers.freeze -= dt;
+        if (powerupTimers.freeze <= 0) {
+            activePowerups.freeze = false;
+        }
+    }
+}
 
-  const body = {
-    userId: 1,
-    date: new Date().toISOString(),
-    products: cart.map(i => ({productId: i.id, quantity: i.qty}))
-  };
+class Target {
+    constructor(type = 'normal') {
+        this.type = type;
+        this.shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+        const roll = Math.random();
+        const settings = DIFFICULTY_SETTINGS[currentDifficulty];
+        
+        // Powerup target - special blue/white pulsing
+        if (type === 'powerup') {
+            this.size = 35 * settings.sizeMultiplier;
+            this.pts = 0;
+            this.speed = 1.5 * settings.speedMultiplier;
+            this.mainColor = '#00ffff';
+            this.darkColor = '#ffffff';
+            this.glowColor = 'rgba(0, 255, 255, 0.9)';
+            this.shape = 'star'; // Always star for powerups
+            // Random powerup type
+            const powerupTypes = ['slowTime', 'freeze', 'clearScreen'];
+            this.powerupType = powerupTypes[Math.floor(Math.random() * powerupTypes.length)];
+        }
+        // Golden target - rare, 2x points
+        else if (type === 'golden') {
+            this.size = 40 * settings.sizeMultiplier;
+            this.pts = 300;
+            this.speed = 2.5 * settings.speedMultiplier;
+            this.mainColor = '#ffd700';
+            this.darkColor = '#aa8800';
+            this.glowColor = 'rgba(255, 215, 0, 0.9)';
+        } else if (roll < 0.1) { 
+            this.size = 15 * settings.sizeMultiplier; 
+            this.pts = 150; 
+            this.speed = 5.2 * settings.speedMultiplier; 
+        } else if (roll < 0.4) { 
+            this.size = 32 * settings.sizeMultiplier; 
+            this.pts = 65; 
+            this.speed = 3.2 * settings.speedMultiplier; 
+        } else { 
+            this.size = 55 * settings.sizeMultiplier; 
+            this.pts = 25; 
+            this.speed = 1.9 * settings.speedMultiplier; 
+        }
+        
+        if (type !== 'golden' && type !== 'powerup') {
+            const c = NEON_PALETTE[Math.floor(Math.random() * NEON_PALETTE.length)];
+            this.mainColor = type === 'trap' ? '#ff0000' : c.m;
+            this.darkColor = type === 'trap' ? '#330000' : c.d;
+            this.glowColor = type === 'trap' ? 'rgba(255, 0, 0, 0.8)' : c.glow;
+        }
+        
+        this.x = Math.random() * (width - 100) + 50;
+        this.y = Math.random() * (height - 200) + 100;
+        this.rot = 0; 
+        this.rotVel = (Math.random() - 0.5) * 0.18;
+        
+        const dir = Math.random() * Math.PI * 2;
+        this.vx = Math.cos(dir) * this.speed * (1 + (settings.time - timeLeft) / 45);
+        this.vy = Math.sin(dir) * this.speed * (1 + (settings.time - timeLeft) / 45);
+        this.life = 1.0;
+        this.pulse = 0;
+        this.wasHit = false;
+        this.decayRate = settings.targetLifetime;
+    }
+    
+    draw() {
+        this.pulse += 0.08;
+        const glowIntensity = this.type === 'golden' ? 20 + Math.sin(this.pulse) * 8 : 
+                             this.type === 'powerup' ? 25 + Math.sin(this.pulse * 3) * 10 :
+                             12 + Math.sin(this.pulse) * 3;
+        
+        ctx.save(); 
+        ctx.translate(this.x, this.y); 
+        ctx.rotate(this.rot); 
+        ctx.globalAlpha = this.life;
+        
+        ctx.shadowBlur = glowIntensity;
+        ctx.shadowColor = this.glowColor;
+        
+        // Special styling for POWERUPS - rainbow pulsing
+        if (this.type === 'powerup') {
+            // Rainbow gradient that pulses
+            const powerupGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size);
+            const hue = (this.pulse * 50) % 360;
+            powerupGrad.addColorStop(0, `hsl(${hue}, 100%, 70%)`);
+            powerupGrad.addColorStop(0.5, `hsl(${(hue + 60) % 360}, 100%, 60%)`);
+            powerupGrad.addColorStop(1, `hsl(${(hue + 120) % 360}, 100%, 50%)`);
+            ctx.fillStyle = powerupGrad;
+            
+            // Bright white border
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 3;
+            
+            ctx.beginPath();
+            this.drawShape(this.size);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Add rotating ring effect
+            ctx.globalAlpha = this.life * 0.4;
+            ctx.strokeStyle = `hsl(${(hue + 180) % 360}, 100%, 70%)`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            this.drawShape(this.size * 0.7);
+            ctx.stroke();
+        }
+        // Special styling for TRAPS - make them very distinct
+        else if (this.type === 'trap') {
+            // Pulsing thick red border
+            const borderPulse = 4 + Math.sin(this.pulse * 2) * 2;
+            ctx.strokeStyle = '#ff0000';
+            ctx.lineWidth = borderPulse;
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = '#ff0000';
+            
+            // Dark red/black gradient fill
+            const trapGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size);
+            trapGrad.addColorStop(0, '#330000');
+            trapGrad.addColorStop(0.5, '#660000');
+            trapGrad.addColorStop(1, '#000000');
+            ctx.fillStyle = trapGrad;
+            
+            ctx.beginPath();
+            this.drawShape(this.size);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Add warning stripes pattern
+            ctx.globalAlpha = this.life * 0.3;
+            ctx.strokeStyle = '#ffff00';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            this.drawShape(this.size * 0.7);
+            ctx.stroke();
+            
+        } else {
+            // Normal targets (non-trap, non-powerup)
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size);
+            grad.addColorStop(0, this.mainColor); 
+            grad.addColorStop(1, this.darkColor);
+            ctx.fillStyle = grad; 
+            ctx.strokeStyle = this.mainColor; 
+            ctx.lineWidth = this.type === 'golden' ? 3 : 2;
+            
+            ctx.beginPath();
+            this.drawShape(this.size);
+            ctx.fill(); 
+            ctx.stroke();
+        }
+        
+        ctx.restore();
+    }
+    
+    drawShape(size) {
+        if(this.shape === 'square') {
+            ctx.rect(-size/2, -size/2, size, size);
+        }
+        else if(this.shape === 'star') { 
+            for(let i=0; i<10; i++) { 
+                let r = (i % 2 === 0) ? size : size/2.2; 
+                ctx.lineTo(Math.cos(i*Math.PI/5 - Math.PI/2) * r, Math.sin(i*Math.PI/5 - Math.PI/2) * r); 
+            } 
+        }
+        else if(this.shape === 'heart') { 
+            ctx.moveTo(0, size/2); 
+            ctx.bezierCurveTo(-size, -size/2, -size/2, -size, 0, -size/4); 
+            ctx.bezierCurveTo(size/2, -size, size, -size/2, 0, size/2); 
+        }
+        else if(this.shape === 'diamond') { 
+            ctx.moveTo(0, -size); 
+            ctx.lineTo(size, 0); 
+            ctx.lineTo(0, size); 
+            ctx.lineTo(-size, 0); 
+        }
+        else if(this.shape === 'octagon') { 
+            for(let i=0; i<8; i++) ctx.lineTo(Math.cos(i*Math.PI/4) * size, Math.sin(i*Math.PI/4) * size); 
+        }
+        else if(this.shape === 'cross') { 
+            const w = size/2.5; 
+            ctx.rect(-w/2, -size, w, size*2); 
+            ctx.rect(-size, -w/2, size*2, w); 
+        }
+        else if(this.shape === 'hexagon') {
+            for(let i=0; i<6; i++) {
+                ctx.lineTo(Math.cos(i*Math.PI/3) * size, Math.sin(i*Math.PI/3) * size);
+            }
+        }
+        else if(this.shape === 'triangle') {
+            for(let i=0; i<3; i++) {
+                ctx.lineTo(Math.cos(i*Math.PI*2/3 - Math.PI/2) * size, Math.sin(i*Math.PI*2/3 - Math.PI/2) * size);
+            }
+        }
+        else {
+            ctx.arc(0, 0, size, 0, Math.PI*2);
+        }
+    }
+}
 
-  const startTime = new Date();
-  try {
-    const r = await fetch(url, {
-      method: "PUT",
-      headers: {"Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : ""},
-      body: JSON.stringify(body)
+class Marker {
+    constructor(x, y, txt, color, isMilestone = false) { 
+        this.x = x; 
+        this.y = y; 
+        this.txt = txt; 
+        this.alpha = 1; 
+        this.color = color; 
+        this.scale = isMilestone ? 2 : 1; 
+        this.isMilestone = isMilestone; 
+    }
+    
+    draw() {
+        ctx.save(); 
+        ctx.globalAlpha = this.alpha; 
+        ctx.fillStyle = this.color;
+        const fontSize = Math.floor((this.isMilestone ? 40 : 28) * this.scale);
+        ctx.font = `bold ${fontSize}px Courier New`; 
+        ctx.textAlign = 'center';
+        ctx.shadowBlur = 20; 
+        ctx.shadowColor = this.color;
+        ctx.fillText(this.txt, this.x, this.y); 
+        ctx.restore();
+        this.y -= this.isMilestone ? 1.5 : 2.5; 
+        this.alpha -= 0.015; 
+        this.scale += 0.008;
+    }
+}
+
+function resize() {
+    dpr = window.devicePixelRatio || 1; 
+    width = window.innerWidth; 
+    height = window.innerHeight;
+    canvas.width = width * dpr; 
+    canvas.height = height * dpr;
+    canvas.style.width = width + 'px'; 
+    canvas.style.height = height + 'px';
+    ctx.scale(dpr, dpr);
+}
+
+window.addEventListener('resize', resize); 
+resize();
+
+window.addEventListener('mousemove', e => { 
+    if(!isTouchDevice) { 
+        cursor.style.left = e.clientX + 'px'; 
+        cursor.style.top = e.clientY + 'px'; 
+    } 
+});
+
+// PAUSE FUNCTIONALITY
+function togglePause() {
+    if (!gameActive) return;
+    
+    gamePaused = !gamePaused;
+    const pauseOverlay = document.getElementById('pauseOverlay');
+    const pauseBtn = document.getElementById('pauseBtn');
+    
+    if (gamePaused) {
+        pauseOverlay.style.display = 'flex';
+        pauseBtn.textContent = '▶️';
+        musicObj.pause();
+    } else {
+        pauseOverlay.style.display = 'none';
+        pauseBtn.textContent = '⏸️';
+        if (!musicObj.muted) musicObj.play().catch(()=>{});
+        requestAnimationFrame(gameLoop);
+    }
+}
+
+// Keyboard controls
+window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && gameActive) {
+        e.preventDefault();
+        togglePause();
+    }
+});
+
+function updateComboDisplay() {
+    const comboElement = document.getElementById('combo');
+    if (comboElement) {
+        comboElement.textContent = combo;
+    }
+    
+    // Show combo milestone flash and screen glow
+    if (combo > 0 && combo % 5 === 0) {
+        const comboFlash = document.getElementById('combo-display');
+        if (comboFlash) {
+            comboFlash.textContent = `${combo}X COMBO!`;
+            comboFlash.classList.remove('show');
+            setTimeout(() => {
+                comboFlash.classList.add('show');
+            }, 10);
+        }
+    }
+    
+    // Screen glow on 10x, 20x combos
+    if (combo === 10 || combo === 20 || combo === 30) {
+        screenGlow.classList.add('active');
+        setTimeout(() => screenGlow.classList.remove('active'), 800);
+    }
+}
+
+function startGame() {
+    const settings = DIFFICULTY_SETTINGS[currentDifficulty];
+    
+    score = 0; 
+    combo = 0; 
+    maxCombo = 0;
+    hits = 0; 
+    shots = 0; 
+    timeLeft = settings.time; 
+    targets = []; 
+    markers = []; 
+    particles = [];
+    gameActive = true;
+    gamePaused = false;
+    clockPlaying = false;
+    
+    // Reset powerups
+    activePowerups = { slowTime: false, freeze: false, clearScreen: false };
+    powerupTimers = { slowTime: 0, freeze: 0 };
+    
+    // Set random starting theme
+    currentTheme = Math.floor(Math.random() * BG_THEMES.length);
+    setBackgroundTheme(currentTheme);
+    
+    document.getElementById('startScreen').style.display = 'none'; 
+    document.getElementById('endScreen').style.display = 'none';
+    document.getElementById('pauseBtn').style.display = 'block';
+    document.body.classList.add('playing'); 
+    if(!isTouchDevice) cursor.style.display = 'flex';
+    
+    document.getElementById('score').textContent = '0';
+    document.getElementById('time').textContent = settings.time;
+    document.getElementById('combo').textContent = '0';
+    
+    musicObj.volume = 1; 
+    if (!musicObj.muted) musicObj.play().catch(()=>{}); 
+    
+    requestAnimationFrame(gameLoop);
+    
+    timerInterval = setInterval(() => { 
+        if (!gameActive || gamePaused) return;
+        
+        timeLeft--; 
+        document.getElementById('time').textContent = timeLeft;
+        
+        // Change background theme at 30 seconds for variety
+        if (timeLeft === 30) {
+            currentTheme = (currentTheme + 1) % BG_THEMES.length;
+            setBackgroundTheme(currentTheme);
+        }
+        
+        if (timeLeft === 5 && !clockPlaying && !sfxMuted) {
+            clockObj.currentTime = 0;
+            clockObj.play().catch(()=>{});
+            clockPlaying = true;
+        }
+        
+        if (timeLeft <= 0) { 
+            fadeOutMusic(); 
+            clockObj.pause(); 
+            clockObj.currentTime = 0;
+            clockPlaying = false;
+            setTimeout(endGame, 1000); 
+            clearInterval(timerInterval); 
+        } 
+    }, 1000);
+}
+
+function endGame() { 
+    gameActive = false;
+    gamePaused = false;
+    document.body.classList.remove('playing'); 
+    cursor.style.display = 'none'; 
+    document.getElementById('pauseBtn').style.display = 'none';
+    
+    // Check for high score
+    const isNewHighScore = isHighScore(score);
+    if (isNewHighScore && score > 0) {
+        saveHighScore(score);
+        
+        // Show celebration
+        newHighScoreEl.classList.remove('show');
+        setTimeout(() => {
+            newHighScoreEl.classList.add('show');
+        }, 500);
+    }
+    
+    document.getElementById('endScreen').style.display = 'flex'; 
+    document.getElementById('resScore').textContent = score; 
+    document.getElementById('resAcc').textContent = Math.round((hits/Math.max(1, shots))*100) + '%'; 
+    document.getElementById('resHits').textContent = hits;
+    document.getElementById('resMaxCombo').textContent = maxCombo + 'x';
+    
+    // Display high scores
+    displayHighScores(isNewHighScore ? score : null);
+}
+
+function gameLoop(time) {
+    if (!gameActive || gamePaused) return; 
+    const dt = time - lastTime; 
+    lastTime = time; 
+    const settings = DIFFICULTY_SETTINGS[currentDifficulty];
+    
+    ctx.clearRect(0, 0, width, height);
+    
+    spawnTimer += dt;
+    
+    // Calculate base spawn rate with progressive difficulty
+    let spawnRate = Math.max(180, 650 - (settings.time - timeLeft) * 12);
+    
+    // SMART SPAWN CONTROL: Reduce at 30s, then ramp back up to peak at 10s
+    if (timeLeft <= 30 && timeLeft > 10) {
+        // Between 30s and 10s: gradually REDUCE spawn rate
+        // At 30s: reduce by 30%, gradually back to normal by 10s
+        const midGameProgress = (30 - timeLeft) / 20; // 0 at 30s, 1 at 10s
+        const reductionFactor = 1 + (0.3 * (1 - midGameProgress)); // 1.3x at 30s, 1.0x at 10s
+        spawnRate = spawnRate * reductionFactor;
+    } else if (timeLeft <= 10) {
+        // Last 10 seconds: PEAK ACTION - faster spawns!
+        const finalProgress = (10 - timeLeft) / 10; // 0 at 10s, 1 at 0s
+        const boostFactor = 1 - (0.2 * finalProgress); // 1.0x at 10s, 0.8x at 0s (faster)
+        spawnRate = spawnRate * boostFactor;
+    }
+    
+    // Dynamic max targets based on time remaining
+    let maxTargets;
+    if (timeLeft > 30) {
+        // Early game: moderate targets
+        maxTargets = settings.time === 60 ? 8 : 9;
+    } else if (timeLeft > 10) {
+        // Mid game (30-10s): FEWER targets
+        maxTargets = settings.time === 60 ? 6 : 7;
+    } else {
+        // Final 10s: LOTS of targets for finale
+        maxTargets = settings.time === 60 ? 12 : settings.time === 45 ? 10 : 12;
+    }
+    
+    if (spawnTimer > spawnRate && targets.length < maxTargets) { 
+        // Adjust trap spawn rate based on time remaining
+        let trapSpawnRate = settings.trapRate;
+        
+        // REDUCE traps significantly in final 10 seconds (50% fewer traps)
+        if (timeLeft <= 10) {
+            trapSpawnRate = trapSpawnRate * 0.5;
+        }
+        
+        // 5% chance for powerup
+        if (Math.random() < 0.05) {
+            targets.push(new Target('powerup'));
+        }
+        // 3% chance for golden target
+        else if (Math.random() < 0.03) {
+            targets.push(new Target('golden'));
+        } else if (Math.random() < trapSpawnRate) {
+            targets.push(new Target('trap'));
+        } else {
+            targets.push(new Target('normal'));
+        }
+        spawnTimer = 0; 
+    }
+    
+    // Update and draw particles
+    particles = particles.filter(p => {
+        p.update();
+        if (p.life > 0) {
+            p.draw();
+            return true;
+        }
+        return false;
     });
-    if(!r.ok) throw new Error("HTTP "+r.status);
-    const d = await r.json();
-    log({method:"PUT", url, status:r.status, req:body, res:d, startTime});
-    showToast("Cart synced successfully!", "success", "Sync");
-  } catch(err) {
-    log({method:"PUT", url, error:err, startTime});
-    showToast("Cart sync failed. Check API console.", "error", "Sync");
-  }
+    
+    // Progressive speed multiplier - targets get faster as game progresses
+    const timeProgress = (settings.time - timeLeft) / settings.time;
+    let speedBoost = 1 + (timeProgress * 0.8); // Up to 80% faster by end of game
+    
+    // Apply slow time powerup
+    if (activePowerups.slowTime) {
+        speedBoost *= 0.3; // 70% slower
+    }
+    
+    // Freeze powerup - stop all movement
+    if (activePowerups.freeze) {
+        speedBoost = 0;
+    }
+    
+    // Update powerup timers
+    updatePowerups(dt);
+    
+    // Update and draw targets
+    targets = targets.filter(t => { 
+        // Apply progressive speed boost
+        t.x += t.vx * speedBoost; 
+        t.y += t.vy * speedBoost; 
+        t.rot += t.rotVel; 
+        if (t.x < t.size || t.x > width - t.size) t.vx *= -1; 
+        if (t.y < 80 || t.y > height - 100) t.vy *= -1; 
+        t.life -= t.decayRate; 
+        if (t.life > 0) { 
+            t.draw(); 
+            return true; 
+        } 
+        if (t.type === 'normal' && !t.wasHit) { 
+            combo = 0; 
+            updateComboDisplay();
+        } 
+        return false; 
+    });
+    
+    markers = markers.filter(m => { 
+        m.draw(); 
+        return m.alpha > 0; 
+    }); 
+    
+    document.getElementById('score').textContent = score;
+    document.getElementById('combo').textContent = combo;
+    
+    requestAnimationFrame(gameLoop);
 }
 
-// CHECKOUT
-async function checkout() {
-  if(!cart.length){ showToast("Cart is empty. Add items first!", "warning", "Checkout"); return; }
-  let url = failMode(`${API}/carts`);
-  const body = { userId:1, date:new Date().toISOString(), products:cart.map(i=>({productId:i.id, quantity:i.qty})) };
-  const startTime = new Date();
-  try {
-    const r = await fetch(url, { method:"POST", headers:{"Content-Type":"application/json","Authorization":token?`Bearer ${token}`:""}, body: JSON.stringify(body) });
-    if(!r.ok) throw new Error("HTTP "+r.status);
-    const d = await r.json();
-    log({method:"POST", url, status:r.status, req:body, res:d, startTime});
-    showToast("Checkout completed successfully! 🎉", "success", "Checkout");
-  } catch(err) {
-    log({method:"POST", url, error:err, startTime});
-    showToast("Checkout failed. See API console.", "error", "Checkout");
-  }
+function handleInput(x, y) {
+    if (!gameActive || gamePaused) return; 
+    shots++; 
+    let hit = false;
+    const settings = DIFFICULTY_SETTINGS[currentDifficulty];
+    
+    targets.sort((a,b)=>a.size-b.size).forEach(t => {
+        if (hit) return;
+        if (Math.hypot(t.x-x, t.y-y) < t.size + 25) {
+            hit = true; 
+            t.wasHit = true;
+            t.life = 0; 
+            playExplosion();
+            
+            for (let i = 0; i < 6; i++) {
+                particles.push(new Particle(t.x, t.y, t.mainColor));
+            }
+            
+            if (!isTouchDevice) {
+                cursor.classList.add('hit');
+                setTimeout(() => cursor.classList.remove('hit'), 150);
+            }
+            
+            if (t.type === 'trap') { 
+                combo = 0; 
+                score = Math.max(0, score - 60); 
+                markers.push(new Marker(x, y, "-60", "#ff0000"));
+                updateComboDisplay();
+            }
+            else if (t.type === 'powerup') {
+                // Activate the powerup!
+                activatePowerup(t.powerupType);
+            }
+            else { 
+                hits++; 
+                combo++;
+                if (combo > maxCombo) maxCombo = combo;
+                
+                let bonus = 0; 
+                let milestoneText = "";
+                
+                // Use difficulty-specific combo bonuses
+                if (settings.comboBonuses[combo]) {
+                    bonus = settings.comboBonuses[combo];
+                    milestoneText = `${combo} HIT BONUS! +${bonus}`;
+                }
+                
+                let basePts = Math.round(t.pts * (1 + combo * 0.12));
+                
+                // Golden target gives 2x points
+                if (t.type === 'golden') {
+                    basePts *= 2;
+                }
+                
+                score += (basePts + bonus);
+                
+                const m = new Marker(x, y, `+${basePts}`, t.mainColor);
+                if (combo > 5) m.scale = 1.4; 
+                markers.push(m);
+                
+                if (bonus > 0) {
+                    markers.push(new Marker(x, y - 40, milestoneText, "#fff", true));
+                }
+                
+                updateComboDisplay();
+            }
+        }
+    });
+    
+    if (!hit) { 
+        combo = 0;
+        updateComboDisplay();
+    }
 }
 
-// Flash product card on Add
-function flashProduct(id){
-  const el = document.querySelector(`.product button[onclick="add(${id})"]`).parentElement;
-  el.style.transition = "all 0.3s ease";
-  el.style.backgroundColor = "rgba(167, 139, 250, 0.2)";
-  el.style.borderColor = "#a78bfa";
-  setTimeout(()=> {
-    el.style.backgroundColor = "rgba(15, 23, 42, 0.6)";
-    el.style.borderColor = "rgba(100, 116, 139, 0.3)";
-  }, 400);
-}
+canvas.addEventListener('mousedown', e => handleInput(e.clientX, e.clientY));
+canvas.addEventListener('touchstart', e => { 
+    e.preventDefault(); 
+    const t = e.touches[0]; 
+    handleInput(t.clientX, t.clientY); 
+}, {passive:false});
+
+// Initialize high scores display on load
+displayHighScores();
 </script>
 </body>
 </html>

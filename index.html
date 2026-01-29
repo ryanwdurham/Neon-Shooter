@@ -1128,9 +1128,22 @@ function gameLoop(time) {
     ctx.clearRect(0, 0, width, height);
     
     spawnTimer += dt;
-    const spawnRate = Math.max(240, 715 - (settings.time - timeLeft) * 10);
     
-    if (spawnTimer > spawnRate) { 
+    // Calculate base spawn rate with progressive difficulty
+    let spawnRate = Math.max(240, 715 - (settings.time - timeLeft) * 10);
+    
+    // REDUCE SPAWN RATE in the final portion to prevent clutter
+    const finalPortion = settings.time === 90 ? 30 : 20; // Last 30s for Easy, 20s for Normal/Hard
+    if (timeLeft <= finalPortion) {
+        // Gradually reduce spawn rate by up to 40% in final seconds
+        const reductionFactor = 1 + (0.4 * (finalPortion - timeLeft) / finalPortion);
+        spawnRate = spawnRate * reductionFactor;
+    }
+    
+    // Also limit max targets on screen based on difficulty
+    const maxTargets = settings.time === 90 ? 12 : settings.time === 60 ? 10 : 8;
+    
+    if (spawnTimer > spawnRate && targets.length < maxTargets) { 
         // 3% chance for golden target
         if (Math.random() < 0.03) {
             targets.push(new Target('golden'));

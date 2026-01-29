@@ -1130,18 +1130,19 @@ function gameLoop(time) {
     spawnTimer += dt;
     
     // Calculate base spawn rate with progressive difficulty
-    let spawnRate = Math.max(240, 715 - (settings.time - timeLeft) * 10);
+    // Increased spawn rate (lower numbers = faster spawning)
+    let spawnRate = Math.max(180, 650 - (settings.time - timeLeft) * 12);
     
-    // REDUCE SPAWN RATE in the final portion to prevent clutter
-    const finalPortion = settings.time === 90 ? 30 : 20; // Last 30s for Easy, 20s for Normal/Hard
+    // PEAK in the middle, then slight reduction at the very end
+    const finalPortion = settings.time === 90 ? 15 : 10; // Last 15s for Easy, 10s for Normal/Hard
     if (timeLeft <= finalPortion) {
-        // Gradually reduce spawn rate by up to 40% in final seconds
-        const reductionFactor = 1 + (0.4 * (finalPortion - timeLeft) / finalPortion);
+        // Only reduce by 20% at the very end (less aggressive)
+        const reductionFactor = 1 + (0.2 * (finalPortion - timeLeft) / finalPortion);
         spawnRate = spawnRate * reductionFactor;
     }
     
-    // Also limit max targets on screen based on difficulty
-    const maxTargets = settings.time === 90 ? 12 : settings.time === 60 ? 10 : 8;
+    // Reduced max targets by 2
+    const maxTargets = settings.time === 90 ? 14 : settings.time === 60 ? 12 : 10;
     
     if (spawnTimer > spawnRate && targets.length < maxTargets) { 
         // 3% chance for golden target
@@ -1165,10 +1166,15 @@ function gameLoop(time) {
         return false;
     });
     
+    // Progressive speed multiplier - targets get faster as game progresses
+    const timeProgress = (settings.time - timeLeft) / settings.time;
+    const speedBoost = 1 + (timeProgress * 0.8); // Up to 80% faster by end of game
+    
     // Update and draw targets
     targets = targets.filter(t => { 
-        t.x += t.vx; 
-        t.y += t.vy; 
+        // Apply progressive speed boost
+        t.x += t.vx * speedBoost; 
+        t.y += t.vy * speedBoost; 
         t.rot += t.rotVel; 
         if (t.x < t.size || t.x > width - t.size) t.vx *= -1; 
         if (t.y < 80 || t.y > height - 100) t.vy *= -1; 

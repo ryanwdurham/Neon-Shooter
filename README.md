@@ -5,9 +5,7 @@ A fast-paced, browser-based aim training game with stunning neon visuals, dynami
 
 ## 🎮 Play Now
 
-Simply open `index.html` in your browser - no installation required!
-
-[**Play the Game →**](your-live-demo-url-here)
+[**Play the Game →**](https://ryanwdurham.github.io/Neon-Shooter/)
 
 ## ✨ Features
 

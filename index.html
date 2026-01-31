@@ -671,6 +671,7 @@ let score = 0, combo = 0, maxCombo = 0, hits = 0, shots = 0, timeLeft = 60;
 let gameActive = false, gamePaused = false, lastTime = 0, spawnTimer = 0;
 let clockPlaying = false;
 let timerInterval;
+let musicFadeInterval = null;
 let currentDifficulty = 'normal';
 let currentTheme = 0;
 
@@ -1244,6 +1245,8 @@ function startGame() {
     gameActive = true;
     gamePaused = false;
     clockPlaying = false;
+    // Clear music fade from previous game
+    if (musicFadeInterval) { clearInterval(musicFadeInterval); musicFadeInterval = null; }
     
     // Reset powerups
     activePowerups = { slowTime: false, freeze: false, clearScreen: false };
@@ -1289,11 +1292,11 @@ function startGame() {
         
         // Start fading music at 10 seconds for smooth ending
         if (timeLeft === 10) {
-            const fadeInterval = setInterval(() => {
+            musicFadeInterval = setInterval(() => {
                 if (musicObj.volume > 0.05) { 
                     musicObj.volume -= 0.05; 
                 } else { 
-                    clearInterval(fadeInterval); 
+                    clearInterval(musicFadeInterval); musicFadeInterval = null; 
                 }
             }, 500); // Fade over 10 seconds
         }
@@ -1312,6 +1315,8 @@ function startGame() {
             clockObj.currentTime = 0;
             clockPlaying = false;
             
+            // Clear music fade
+            if (musicFadeInterval) { clearInterval(musicFadeInterval); musicFadeInterval = null; }
             // Smooth ending transition
             setTimeout(() => {
                 endGame();

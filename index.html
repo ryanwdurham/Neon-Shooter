@@ -1274,14 +1274,14 @@ function startGame() {
         timeLeft--; 
         document.getElementById('time').textContent = timeLeft;
         
-        // Change background theme multiple times: at 45s, 30s, and 15s (avoiding last 5s)
+        // Change background theme multiple times: at 50s, 37s, 24s, and 12s (avoiding last 5s)
         if (settings.time === 60) {
-            if (timeLeft === 45 || timeLeft === 30 || timeLeft === 15) {
+            if (timeLeft === 50 || timeLeft === 37 || timeLeft === 24 || timeLeft === 12) {
                 currentTheme = (currentTheme + 1) % BG_THEMES.length;
                 setBackgroundTheme(currentTheme);
             }
         } else if (settings.time === 45) {
-            if (timeLeft === 30 || timeLeft === 15) {
+            if (timeLeft === 35 || timeLeft === 25 || timeLeft === 15) {
                 currentTheme = (currentTheme + 1) % BG_THEMES.length;
                 setBackgroundTheme(currentTheme);
             }
@@ -1300,6 +1300,7 @@ function startGame() {
         
         if (timeLeft === 5 && !clockPlaying && !sfxMuted) {
             clockObj.currentTime = 0;
+            clockObj.volume = 1.0; // Full volume for clock
             clockObj.play().catch(()=>{});
             clockPlaying = true;
         }

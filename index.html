@@ -187,6 +187,32 @@
             animation: comboFlash 0.6s ease-out;
         }
         
+        /* Powerup Indicator */
+        #powerupIndicator {
+            position: fixed;
+            top: 180px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 150;
+            font-size: 42px;
+            font-weight: bold;
+            text-shadow: 0 0 20px currentColor, 0 0 40px currentColor;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        #powerupIndicator.active {
+            opacity: 1;
+            animation: powerupPulse 0.5s ease-out;
+        }
+        
+        @keyframes powerupPulse {
+            0% { transform: translateX(-50%) scale(0.5); opacity: 0; }
+            50% { transform: translateX(-50%) scale(1.2); opacity: 1; }
+            100% { transform: translateX(-50%) scale(1); opacity: 1; }
+        }
+        
         @keyframes comboFlash {
             0% { opacity: 0; transform: translateX(-50%) scale(0.5); }
             50% { opacity: 1; transform: translateX(-50%) scale(1.3); }
@@ -539,6 +565,7 @@
 </div>
 
 <div id="combo-display"></div>
+<div id="powerupIndicator"></div>
 <div id="newHighScore">🎉 NEW HIGH SCORE! 🎉</div>
 
 <div id="pauseOverlay">
@@ -554,9 +581,10 @@
 <div id="startScreen" class="screen">
     <h1 class="neon-title">⚡ NEON SHOOTER ⚡</h1>
     <p class="blue-info">
-        Hit targets to score!<br> Small = More points | Big = Easy points<br>
-        Build combos for bonuses • Avoid red shapes <br> Special 🌟 = PowerUps!
-   </p>
+        Hit targets to score! <br>Small = More points | Big = Easy points<br>
+        Build combos for bonuses • Avoid red traps <br> Special 🌟 = PowerUps!
+    </p>
+    
     <div style="font-size: 22px; margin: 30px 0 20px 0; color: #0ff; text-shadow: 0 0 10px #0ff; font-weight: bold;">
         Choose Your Challenge:
     </div>
@@ -579,6 +607,7 @@
         <div>MAX COMBO: <span id="resMaxCombo">0x</span></div>
     </div>
     <button class="btn" onclick="startGame()">PLAY AGAIN</button>
+    <button class="btn" onclick="backToStart()" style="margin-top: 15px; background: linear-gradient(45deg, #888, #aaa); font-size: clamp(18px, 4vw, 24px);">BACK TO MENU</button>
     
     <div class="highscores-box" id="highScoresDisplay">
         <h2>🏆 TOP 5 SCORES 🏆</h2>
@@ -673,6 +702,8 @@ let timerInterval;
 let musicFadeInterval = null;
 let currentDifficulty = 'normal';
 let currentTheme = 0;
+let lastHitTime = 0; // Track time since last hit for combo grace period
+const COMBO_GRACE_PERIOD = 6000; // 6 seconds - combo won't reset if no targets available
 
 // Background Themes - each game gets random theme that changes mid-game
 const BG_THEMES = [
@@ -777,38 +808,72 @@ const NEON_PALETTE = [
     {m:'#ffffff', d:'#666666', glow:'rgba(255, 255, 255, 0.8)'}
 ];
 
-// HIGH SCORE SYSTEM
-function getHighScores() {
-    const scores = localStorage.getItem('neonShooterHighScores');
-    return scores ? JSON.parse(scores) : [];
+// HIGH SCORE SYSTEM - Separate scores for each difficulty
+function getHighScores(difficulty = null) {
+    const allScores = localStorage.getItem('neonShooterHighScores');
+    console.log('🔍 Raw localStorage value:', allScores);
+    
+    const scores = allScores ? JSON.parse(allScores) : { easy: [], normal: [], hard: [] };
+    console.log('🔍 Parsed scores object:', JSON.stringify(scores));
+    
+    if (!scores.easy) scores.easy = [];
+    if (!scores.normal) scores.normal = [];
+    if (!scores.hard) scores.hard = [];
+    
+    const result = difficulty ? scores[difficulty] : scores;
+    console.log(`🔍 Returning for difficulty "${difficulty}":`, result);
+    
+    return result;
 }
 
-function saveHighScore(newScore) {
-    let scores = getHighScores();
-    scores.push({
+function saveHighScore(newScore, difficulty) {
+    let allScores = getHighScores(); // Get all scores object
+    console.log('📥 Before save, allScores:', JSON.stringify(allScores));
+    
+    allScores[difficulty].push({
         score: newScore,
         date: new Date().toLocaleDateString(),
-        combo: maxCombo
+        combo: maxCombo,
+        difficulty: difficulty
     });
-    scores.sort((a, b) => b.score - a.score);
-    scores = scores.slice(0, 5); // Keep top 5
-    localStorage.setItem('neonShooterHighScores', JSON.stringify(scores));
-    return scores;
+    allScores[difficulty].sort((a, b) => b.score - a.score);
+    allScores[difficulty] = allScores[difficulty].slice(0, 5); // Keep top 5 per difficulty
+    
+    localStorage.setItem('neonShooterHighScores', JSON.stringify(allScores));
+    console.log(`✅ Saved high score: ${newScore} for ${difficulty} mode`);
+    console.log('📤 After save, full object:', JSON.stringify(allScores));
+    console.log(`📋 ${difficulty} scores array:`, allScores[difficulty]);
+    
+    return allScores[difficulty];
 }
 
-function isHighScore(newScore) {
-    const scores = getHighScores();
+function isHighScore(newScore, difficulty) {
+    const scores = getHighScores(difficulty);
     if (scores.length < 5) return true;
     return newScore > scores[scores.length - 1].score;
 }
 
-function displayHighScores(currentScore = null) {
-    const scores = getHighScores();
+function displayHighScores(currentScore = null, currentDiff = 'normal') {
+    console.log(`📊 Displaying high scores for ${currentDiff}, current score: ${currentScore}`);
+    const scores = getHighScores(currentDiff);
+    console.log(`Found ${scores.length} scores:`, scores);
+    
     const scoresList = document.getElementById('scoresList');
+    if (!scoresList) {
+        console.error('❌ scoresList element not found!');
+        return;
+    }
+    
     scoresList.innerHTML = '';
     
+    // Display difficulty label
+    const diffLabel = currentDiff.charAt(0).toUpperCase() + currentDiff.slice(1);
+    const diffColor = currentDiff === 'easy' ? '#0f0' : currentDiff === 'normal' ? '#0ff' : '#f0f';
+    scoresList.innerHTML = `<div style="text-align: center; color: ${diffColor}; font-size: 18px; margin-bottom: 15px; font-weight: bold; text-shadow: 0 0 10px ${diffColor};">${diffLabel} Mode</div>`;
+    
     if (scores.length === 0) {
-        scoresList.innerHTML = '<div style="text-align: center; color: #888; padding: 20px;">No high scores yet!</div>';
+        scoresList.innerHTML += '<div style="text-align: center; color: #888; padding: 20px;">No high scores yet!</div>';
+        console.log('No scores to display');
         return;
     }
     
@@ -828,6 +893,7 @@ function displayHighScores(currentScore = null) {
         `;
         scoresList.appendChild(div);
     });
+    console.log(`✅ Displayed ${scores.length} scores`);
 }
 
 // Particle effect for hits
@@ -1265,6 +1331,9 @@ function startGame() {
     document.getElementById('time').textContent = settings.time;
     document.getElementById('combo').textContent = '0';
     
+    // Initialize combo grace period timer
+    lastHitTime = Date.now();
+    
     musicObj.volume = 1; 
     if (!musicObj.muted) musicObj.play().catch(()=>{}); 
     
@@ -1326,6 +1395,12 @@ function startGame() {
     }, 1000);
 }
 
+
+function backToStart() {
+    document.getElementById('endScreen').style.display = 'none';
+    document.getElementById('startScreen').style.display = 'flex';
+}
+
 function endGame() { 
     gameActive = false;
     gamePaused = false;
@@ -1333,26 +1408,31 @@ function endGame() {
     cursor.style.display = 'none'; 
     document.getElementById('pauseBtn').style.display = 'none';
     
-    // Check for high score
-    const isNewHighScore = isHighScore(score);
-    if (isNewHighScore && score > 0) {
-        saveHighScore(score);
-        
-        // Show celebration
-        newHighScoreEl.classList.remove('show');
-        setTimeout(() => {
-            newHighScoreEl.classList.add('show');
-        }, 500);
-    }
-    
     document.getElementById('endScreen').style.display = 'flex'; 
     document.getElementById('resScore').textContent = score; 
     document.getElementById('resAcc').textContent = Math.round((hits/Math.max(1, shots))*100) + '%'; 
     document.getElementById('resHits').textContent = hits;
     document.getElementById('resMaxCombo').textContent = maxCombo + 'x';
     
-    // Display high scores
-    displayHighScores(isNewHighScore ? score : null);
+    // Save high score if score > 0
+    let highlightScore = null;
+    if (score > 0) {
+        console.log(`💾 Attempting to save score: ${score} for difficulty: ${currentDifficulty}`);
+        saveHighScore(score, currentDifficulty);
+        highlightScore = score;
+        
+        // Show celebration for any score
+        newHighScoreEl.classList.remove('show');
+        setTimeout(() => {
+            newHighScoreEl.classList.add('show');
+        }, 500);
+    } else {
+        console.log('⚠️ Score is 0, not saving');
+    }
+    
+    // Always display high scores for current difficulty
+    console.log(`📺 About to display scores for: ${currentDifficulty}`);
+    displayHighScores(highlightScore, currentDifficulty);
 }
 
 function gameLoop(time) {
@@ -1466,11 +1546,9 @@ function gameLoop(time) {
         if (t.life > 0) { 
             t.draw(); 
             return true; 
-        } 
-        if (t.type === 'normal' && !t.wasHit) { 
-            combo = 0; 
-            updateComboDisplay();
-        } 
+        }
+        // Target expired naturally - don't reset combo, just remove it
+        // Combo only resets on actual misses (clicking and missing)
         return false; 
     });
     
@@ -1555,8 +1633,12 @@ function handleInput(x, y) {
     });
     
     if (!hit) { 
+        // Reset combo on miss
         combo = 0;
         updateComboDisplay();
+    } else {
+        // Update last hit time on successful hit (for potential future use)
+        lastHitTime = Date.now();
     }
 }
 
@@ -1567,8 +1649,6 @@ canvas.addEventListener('touchstart', e => {
     handleInput(t.clientX, t.clientY); 
 }, {passive:false});
 
-// Initialize high scores display on load
-displayHighScores();
 </script>
 </body>
 </html>

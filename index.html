@@ -583,7 +583,7 @@
     <h1 class="neon-title">⚡ NEON SHOOTER ⚡</h1>
     <p class="blue-info">
         Hit targets to score!<br> Small = More points <br> Big = Easy points<br>
-        Build combos for bonuses <br> Avoid red Shapes • Special 🌟 = PowerUps!
+        Build combos for bonuses <br> Avoid red shapes • Special 🌟 = PowerUps!
     </p>
     
     <div style="font-size: 22px; margin: 30px 0 20px 0; color: #0ff; text-shadow: 0 0 10px #0ff; font-weight: bold;">
@@ -700,6 +700,7 @@ let score = 0, combo = 0, maxCombo = 0, hits = 0, shots = 0, timeLeft = 60;
 let gameActive = false, gamePaused = false, lastTime = 0, spawnTimer = 0;
 let clockPlaying = false;
 let timerInterval;
+let musicFadeInterval = null; // Track music fade to prevent carryover between games
 let currentDifficulty = 'normal';
 let currentTheme = 0;
 
@@ -1274,6 +1275,12 @@ function startGame() {
     gamePaused = false;
     clockPlaying = false;
     
+    // Clear any existing music fade interval from previous game
+    if (musicFadeInterval) {
+        clearInterval(musicFadeInterval);
+        musicFadeInterval = null;
+    }
+    
     // Reset powerups
     activePowerups = { slowTime: false, freeze: false, clearScreen: false };
     powerupTimers = { slowTime: 0, freeze: 0 };
@@ -1318,11 +1325,12 @@ function startGame() {
         
         // Start fading music at 10 seconds for smooth ending
         if (timeLeft === 10) {
-            const fadeInterval = setInterval(() => {
+            musicFadeInterval = setInterval(() => {
                 if (musicObj.volume > 0.05) { 
                     musicObj.volume -= 0.05; 
                 } else { 
-                    clearInterval(fadeInterval); 
+                    clearInterval(musicFadeInterval);
+                    musicFadeInterval = null; 
                 }
             }, 500); // Fade over 10 seconds
         }
@@ -1340,6 +1348,12 @@ function startGame() {
             clockObj.pause(); 
             clockObj.currentTime = 0;
             clockPlaying = false;
+            
+            // Clear music fade interval
+            if (musicFadeInterval) {
+                clearInterval(musicFadeInterval);
+                musicFadeInterval = null;
+            }
             
             // Smooth ending transition
             setTimeout(() => {

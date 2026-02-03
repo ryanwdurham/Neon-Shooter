@@ -24,7 +24,7 @@ A fast-paced, browser-based aim training game with stunning neon visuals, dynami
 - **💥 Clear Screen** (instant) - Removes all targets + bonus points
 
 ### 🎨 Dynamic Visuals
-- **6 Neon Background Themes** - Automatically changes 4 times per game
+- **6 Neon Background Themes** - Automatically changes throughout the game
 - **Smooth Animations** - 60 FPS canvas rendering with particle effects
 - **Screen Glow Effects** - Pulsing effects on combo milestones (10x, 20x, 30x)
 - **Responsive Design** - Works on desktop, tablet, and mobile
@@ -57,13 +57,6 @@ A fast-paced, browser-based aim training game with stunning neon visuals, dynami
 - ⚠️ 20% trap spawn rate
 - 🎁 Combo bonuses at 15, 25, 40, 60 hits
 
-### 🎖️ Progression System
-- **High Score Tracking** - Top 5 scores saved locally
-- **Max Combo Display** - Track your best hit streak
-- **Accuracy Stats** - See your hit percentage
-- **Score Medals** - 🥇 🥈 🥉 for top 3 scores
-
-
 ## 🎯 How to Play
 
 ### Controls
@@ -77,7 +70,7 @@ A fast-paced, browser-based aim training game with stunning neon visuals, dynami
 - **Medium targets** = Moderate points (65 pts)
 - **Large targets** = Fewer points (25 pts)
 - **Golden targets** = 2x points
-- **Traps** = -60 points (avoid!)
+- **Traps Red Shapes** = -60 points (avoid!)
 
 ### Combo System
 - Hit targets consecutively without missing
@@ -91,7 +84,6 @@ A fast-paced, browser-based aim training game with stunning neon visuals, dynami
 3. ✅ Grab powerups strategically
 4. ✅ Avoid traps at all costs
 5. ✅ Use Freeze powerup on small targets
-6. ✅ Save Clear Screen for overwhelming moments
 
 ## 🛠️ Technical Details
 
@@ -123,142 +115,6 @@ A fast-paced, browser-based aim training game with stunning neon visuals, dynami
 - CSS gradient animations
 - Audio channel pooling for performance
 
-## 📁 Project Structure
-
-```
-neon-shooter/
-├── index.html              # Main game file (all-in-one)
-├── sounds/                 # Audio assets
-│   ├── explosion1.mp3     # Hit sound effect
-│   ├── electronic2.mp3    # Background music
-│   └── clock.wav          # Final countdown clock
-└── README.md              # This file
-```
-
-## 🎨 Customization
-
-### Change Background Themes
-Edit the `BG_THEMES` array in the code to add/modify background colors:
-```javascript
-const BG_THEMES = [
-    {
-        name: 'Your Theme',
-        gradient1: 'rgba(R, G, B, 0.3)',
-        gradient2: 'rgba(R, G, B, 0.3)',
-        gradient3: 'rgba(R, G, B, 0.2)'
-    }
-];
-```
-
-### Adjust Difficulty
-Modify `DIFFICULTY_SETTINGS` to tweak game balance:
-```javascript
-const DIFFICULTY_SETTINGS = {
-    easy: {
-        time: 60,
-        sizeMultiplier: 1.2,
-        speedMultiplier: 0.7,
-        // ... more settings
-    }
-};
-```
-
-### Add Custom Sounds
-Replace files in the `sounds/` folder with your own audio files (keep the same names).
-
-## 🐛 Known Issues
-
-- First game may have audio delay on some browsers (autoplay policy)
-- **Fix**: Click anywhere on the page before starting
-
-## 🔮 Future Enhancements
-
-- [ ] Online leaderboards
-- [ ] Achievement system
-- [ ] More powerup types
-- [ ] Target skins/themes
-- [ ] Daily challenges
-- [ ] Sound effect customization
-- [ ] Endless mode
-- [ ] Two-player mode
-- [ ] Mobile app version
-
-## 📝 Changelog
-
-### Version 1.0.0 (Current)
-- ✅ Initial release
-- ✅ 3 difficulty modes
-- ✅ Powerup system
-- ✅ Dynamic backgrounds
-- ✅ High score tracking
-- ✅ Smooth game ending
-- ✅ Mobile support
-- ✅ Pause functionality
-
-## 🤝 Contributing
-
-Contributions are welcome! Here's how:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-### Contribution Ideas
-- Add new powerup types
-- Create new background themes
-- Improve mobile controls
-- Add accessibility features
-- Optimize performance
-- Add new target shapes
-
-## 📄 License
-
-This project is licensed under the MIT License - see below for details:
-
-```
-MIT License
-
-Copyright (c) 2025 [Your Name]
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
-
-## 👤 Author
-
-**Your Name**
-- GitHub: [@your-username](https://github.com/your-username)
-- Website: [your-website.com](https://your-website.com)
-
-## 🙏 Acknowledgments
-
-- Inspired by aim training games like Aim Lab and KovaaK's
-- Neon aesthetic inspired by cyberpunk and synthwave culture
-- Built with ❤️ and lots of ☕
-
-## 📞 Support
-
-If you encounter any issues:
-1. Check the [Known Issues](#-known-issues) section
-2. Open an issue on GitHub
-3. Contact: your-email@example.com
 
 ---
 
